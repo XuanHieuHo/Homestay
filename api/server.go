@@ -41,14 +41,18 @@ func (server *Server) setupRouter() {
 	router.POST("/register", server.createUser)
 
 
-
+	// user
 	authRoutes := router.Group("/").Use(authMiddleware(server.tokenMaker))
 	authRoutes.GET("/users/:username", server.getUserByUsername)
+	authRoutes.PUT("/users/:username", server.updateUser)
 
 
-
-	authAdminRoutes := router.Group("/admin").Use(authAdminMiddleware(server.tokenMaker, server))
+	// admin
+	authAdminRoutes := router.Group("/admin").Use(authAdminMiddleware(server.tokenMaker, server.store))
 	authAdminRoutes.GET("/users", server.listUser)
+	authAdminRoutes.GET("/users/:username", server.adminGetUserByUsername)
+	authAdminRoutes.PUT("/users/:username", server.adminUpdateUser)
+	authAdminRoutes.DELETE("/users/:username", server.deleteUser)
 
 	server.router = router
 }
