@@ -10,10 +10,10 @@ import (
 )
 
 type Server struct {
-	config util.Config
-	store db.Store
+	config     util.Config
+	store      db.Store
 	tokenMaker token.Maker
-	router *gin.Engine
+	router     *gin.Engine
 }
 
 func NewServer(config util.Config, store db.Store) (*Server, error) {
@@ -28,27 +28,25 @@ func NewServer(config util.Config, store db.Store) (*Server, error) {
 		tokenMaker: tokenMaker,
 	}
 
-
 	server.setupRouter()
 	return server, nil
 }
 
 func (server *Server) setupRouter() {
 	router := gin.Default()
+	api := router.Group("/api")
 
 	// login and register
-	router.POST("/login", server.loginUser)
-	router.POST("/register", server.createUser)
-
+	api.POST("/login", server.loginUser)
+	api.POST("/register", server.createUser)
 
 	// user
-	authRoutes := router.Group("/").Use(authMiddleware(server.tokenMaker))
+	authRoutes := api.Group("/").Use(authMiddleware(server.tokenMaker))
 	authRoutes.GET("/users/:username", server.getUserByUsername)
 	authRoutes.PUT("/users/:username", server.updateUser)
 
-
 	// admin
-	authAdminRoutes := router.Group("/admin").Use(authAdminMiddleware(server.tokenMaker, server.store))
+	authAdminRoutes := api.Group("/admin").Use(authAdminMiddleware(server.tokenMaker, server.store))
 	authAdminRoutes.GET("/users", server.listUser)
 	authAdminRoutes.GET("/users/:username", server.adminGetUserByUsername)
 	authAdminRoutes.PUT("/users/:username", server.adminUpdateUser)
