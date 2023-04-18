@@ -16,7 +16,7 @@ type createFeedbackRequest struct {
 }
 
 type getUserAndHomestay struct {
-	UserComment       string `uri:"user_comment" binding:"required,alphanum"`
+	UserComment       string `uri:"username" binding:"required,alphanum"`
 	HomestayCommented int64  `uri:"homestay_commented" binding:"required,min=1"`
 }
 
@@ -111,7 +111,7 @@ func (server *Server) listFeedbackByID(ctx *gin.Context) {
 
 type updateFeedbackRequest struct {
 	ID                int64  `uri:"id" binding:"required,min=1"`
-	UserComment       string `uri:"user_comment" binding:"required,alphanum"`
+	UserComment       string `uri:"username" binding:"required,alphanum"`
 	HomestayCommented int64  `uri:"homestay_commented" binding:"required,min=1"`
 }
 

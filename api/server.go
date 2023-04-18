@@ -52,10 +52,10 @@ func (server *Server) setupRouter() {
 	authRoutes.GET("/homestays/:id", server.getHomestayByID)
 	authRoutes.GET("/homestays/", server.listHomestay)
 	// feedback
-	authRoutes.POST("/users/:user_comment/feedbacks/:homestay_commented", server.createFeedback)
+	authRoutes.POST("/users/:username/feedbacks/:homestay_commented", server.createFeedback)
 	authRoutes.GET("/homestays/:id/feedbacks", server.listFeedbackByID)
-	authRoutes.PUT("/users/:user_comment/feedbacks/:homestay_commented/:id", server.updateFeedback)
-	authRoutes.DELETE("/users/:user_comment/feedbacks/:homestay_commented/:id", server.deleteFeedback)
+	authRoutes.PUT("/users/:username/feedbacks/:homestay_commented/:id", server.updateFeedback)
+	authRoutes.DELETE("/users/:username/feedbacks/:homestay_commented/:id", server.deleteFeedback)
 
 	// -----------------------------------admin--------------------------------
 	authAdminRoutes := api.Group("/admin").Use(authAdminMiddleware(server.tokenMaker, server.store))
@@ -79,7 +79,7 @@ func (server *Server) setupRouter() {
 	authAdminRoutes.DELETE("/homestays/:id", server.deleteHomestay)
 	// feedback
 	authAdminRoutes.GET("/homestays/:id/feedbacks", server.listFeedbackByID)
-	authAdminRoutes.DELETE("/users/:user_comment/feedbacks/:homestay_commented/:id", server.adminDeleteFeedback)
+	authAdminRoutes.DELETE("/users/:username/feedbacks/:homestay_commented/:id", server.adminDeleteFeedback)
 
 	server.router = router
 }
