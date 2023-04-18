@@ -50,6 +50,7 @@ type Homestay struct {
 
 type Payment struct {
 	ID        int64     `json:"id"`
+	BookingID int64     `json:"booking_id"`
 	Amount    string    `json:"amount"`
 	PayDate   time.Time `json:"pay_date"`
 	PayMethod string    `json:"pay_method"`

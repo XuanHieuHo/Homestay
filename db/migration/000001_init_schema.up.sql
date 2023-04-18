@@ -25,7 +25,7 @@ CREATE TABLE "homestays" (
 
 CREATE TABLE "promotions" (
   "id" bigserial PRIMARY KEY,
-  "title" varchar NOT NULL,
+  "title" varchar UNIQUE NOT NULL,
   "description" varchar NOT NULL,
   "discount_percent" float NOT NULL,
   "start_date" Date NOT NULL DEFAULT 'now()',
@@ -34,6 +34,7 @@ CREATE TABLE "promotions" (
 
 CREATE TABLE "payments" (
   "id" bigserial PRIMARY KEY,
+  "booking_id" bigserial NOT NULL,
   "amount" decimal NOT NULL,
   "pay_date" Date NOT NULL,
   "pay_method" varchar NOT NULL DEFAULT 'cash',
@@ -81,6 +82,8 @@ CREATE INDEX ON "feedbacks" ("homestay_commented");
 COMMENT ON COLUMN "bookings"."service_fee" IS 'must be positive';
 
 COMMENT ON COLUMN "bookings"."tax" IS 'must be positive';
+
+ALTER TABLE "payments" ADD FOREIGN KEY ("booking_id") REFERENCES "bookings" ("id");
 
 ALTER TABLE "bookings" ADD FOREIGN KEY ("user_booking") REFERENCES "users" ("username");
 

@@ -16,7 +16,7 @@ import (
 type createUserRequest struct {
 	Username string `json:"username" binding:"required,alphanum"`
 	Password string `json:"password" binding:"required,min=6"`
-	FullName string `json:"full_name" binding:"required"`
+	FullName string `json:"full_name" binding:"required,alphanum"`
 	Email    string `json:"email" binding:"required,email"`
 	Phone    string `json:"phone" binding:"required,e164"`
 }
@@ -333,5 +333,5 @@ func (server *Server) deleteUser(ctx *gin.Context) {
 		ctx.JSON(http.StatusInternalServerError, errorResponse(err))
 		return
 	}
-	ctx.JSON(http.StatusOK, "Delete Account Successfully")
+	ctx.JSON(http.StatusOK, "Delete User Successfully")
 }
