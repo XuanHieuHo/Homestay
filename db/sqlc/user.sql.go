@@ -10,6 +10,35 @@ import (
 	"time"
 )
 
+const changeUserPassword = `-- name: ChangeUserPassword :one
+UPDATE users
+SET hashed_password = $2
+WHERE username = $1
+RETURNING username, hashed_password, full_name, email, phone, role, "isBooking", password_changed_at, created_at
+`
+
+type ChangeUserPasswordParams struct {
+	Username       string `json:"username"`
+	HashedPassword string `json:"hashed_password"`
+}
+
+func (q *Queries) ChangeUserPassword(ctx context.Context, arg ChangeUserPasswordParams) (User, error) {
+	row := q.db.QueryRowContext(ctx, changeUserPassword, arg.Username, arg.HashedPassword)
+	var i User
+	err := row.Scan(
+		&i.Username,
+		&i.HashedPassword,
+		&i.FullName,
+		&i.Email,
+		&i.Phone,
+		&i.Role,
+		&i.IsBooking,
+		&i.PasswordChangedAt,
+		&i.CreatedAt,
+	)
+	return i, err
+}
+
 const createUser = `-- name: CreateUser :one
 INSERT INTO users (
   username,
@@ -18,11 +47,12 @@ INSERT INTO users (
   email,
   phone,
   role,
+  "isBooking",
   password_changed_at,
   created_at
 ) VALUES (
-  $1, $2, $3, $4, $5, $6, $7, $8
-) RETURNING username, hashed_password, full_name, email, phone, role, password_changed_at, created_at
+  $1, $2, $3, $4, $5, $6, $7, $8, $9
+) RETURNING username, hashed_password, full_name, email, phone, role, "isBooking", password_changed_at, created_at
 `
 
 type CreateUserParams struct {
@@ -32,6 +62,7 @@ type CreateUserParams struct {
 	Email             string    `json:"email"`
 	Phone             string    `json:"phone"`
 	Role              string    `json:"role"`
+	IsBooking         bool      `json:"isBooking"`
 	PasswordChangedAt time.Time `json:"password_changed_at"`
 	CreatedAt         time.Time `json:"created_at"`
 }
@@ -44,6 +75,7 @@ func (q *Queries) CreateUser(ctx context.Context, arg CreateUserParams) (User, e
 		arg.Email,
 		arg.Phone,
 		arg.Role,
+		arg.IsBooking,
 		arg.PasswordChangedAt,
 		arg.CreatedAt,
 	)
@@ -55,6 +87,7 @@ func (q *Queries) CreateUser(ctx context.Context, arg CreateUserParams) (User, e
 		&i.Email,
 		&i.Phone,
 		&i.Role,
+		&i.IsBooking,
 		&i.PasswordChangedAt,
 		&i.CreatedAt,
 	)
@@ -71,7 +104,7 @@ func (q *Queries) DeleteUser(ctx context.Context, username string) error {
 }
 
 const getUser = `-- name: GetUser :one
-SELECT username, hashed_password, full_name, email, phone, role, password_changed_at, created_at FROM users
+SELECT username, hashed_password, full_name, email, phone, role, "isBooking", password_changed_at, created_at FROM users
 WHERE username = $1 LIMIT 1
 `
 
@@ -85,6 +118,7 @@ func (q *Queries) GetUser(ctx context.Context, username string) (User, error) {
 		&i.Email,
 		&i.Phone,
 		&i.Role,
+		&i.IsBooking,
 		&i.PasswordChangedAt,
 		&i.CreatedAt,
 	)
@@ -92,7 +126,7 @@ func (q *Queries) GetUser(ctx context.Context, username string) (User, error) {
 }
 
 const listUsers = `-- name: ListUsers :many
-SELECT username, hashed_password, full_name, email, phone, role, password_changed_at, created_at FROM users
+SELECT username, hashed_password, full_name, email, phone, role, "isBooking", password_changed_at, created_at FROM users
 ORDER BY username
 LIMIT $1
 OFFSET $2
@@ -119,6 +153,7 @@ func (q *Queries) ListUsers(ctx context.Context, arg ListUsersParams) ([]User, e
 			&i.Email,
 			&i.Phone,
 			&i.Role,
+			&i.IsBooking,
 			&i.PasswordChangedAt,
 			&i.CreatedAt,
 		); err != nil {
@@ -139,7 +174,7 @@ const updateUser = `-- name: UpdateUser :one
 UPDATE users
 SET full_name = $2, email = $3, phone = $4
 WHERE username = $1
-RETURNING username, hashed_password, full_name, email, phone, role, password_changed_at, created_at
+RETURNING username, hashed_password, full_name, email, phone, role, "isBooking", password_changed_at, created_at
 `
 
 type UpdateUserParams struct {
@@ -164,6 +199,36 @@ func (q *Queries) UpdateUser(ctx context.Context, arg UpdateUserParams) (User, e
 		&i.Email,
 		&i.Phone,
 		&i.Role,
+		&i.IsBooking,
+		&i.PasswordChangedAt,
+		&i.CreatedAt,
+	)
+	return i, err
+}
+
+const updateUserStatus = `-- name: UpdateUserStatus :one
+UPDATE users
+SET "isBooking" = $2
+WHERE username = $1
+RETURNING username, hashed_password, full_name, email, phone, role, "isBooking", password_changed_at, created_at
+`
+
+type UpdateUserStatusParams struct {
+	Username  string `json:"username"`
+	IsBooking bool   `json:"isBooking"`
+}
+
+func (q *Queries) UpdateUserStatus(ctx context.Context, arg UpdateUserStatusParams) (User, error) {
+	row := q.db.QueryRowContext(ctx, updateUserStatus, arg.Username, arg.IsBooking)
+	var i User
+	err := row.Scan(
+		&i.Username,
+		&i.HashedPassword,
+		&i.FullName,
+		&i.Email,
+		&i.Phone,
+		&i.Role,
+		&i.IsBooking,
 		&i.PasswordChangedAt,
 		&i.CreatedAt,
 	)

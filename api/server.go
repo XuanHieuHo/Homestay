@@ -41,21 +41,26 @@ func (server *Server) setupRouter() {
 	api.POST("/register", server.createUser)
 
 	// -----------------------------------user--------------------------------
-	authRoutes := api.Group("/").Use(authMiddleware(server.tokenMaker))
+	authUserRoutes := api.Group("/").Use(authMiddleware(server.tokenMaker))
 	//user
-	authRoutes.GET("/users/:username", server.getUserByUsername)
-	authRoutes.PUT("/users/:username", server.updateUser)
+	authUserRoutes.GET("/users/:username", server.getUserByUsername)
+	authUserRoutes.PUT("/users/:username", server.updateUser)
+	authUserRoutes.PUT("/users/:username/check", server.checkPassword)
+	authUserRoutes.PUT("/users/:username/change", server.changePassword)
 	//promotion
-	authRoutes.GET("/promotions/:title", server.getPromotionByTitle)
-	authRoutes.GET("/promotions/", server.listPromotion)
+	authUserRoutes.GET("/promotions/:title", server.getPromotionByTitle)
+	authUserRoutes.GET("/promotions/", server.listPromotion)
 	// homestay
-	authRoutes.GET("/homestays/:id", server.getHomestayByID)
-	authRoutes.GET("/homestays/", server.listHomestay)
+	authUserRoutes.GET("/homestays/:id", server.getHomestayByID)
+	authUserRoutes.GET("/homestays/", server.listHomestay)
 	// feedback
-	authRoutes.POST("/users/:username/feedbacks/:homestay_commented", server.createFeedback)
-	authRoutes.GET("/homestays/:id/feedbacks", server.listFeedbackByID)
-	authRoutes.PUT("/users/:username/feedbacks/:homestay_commented/:id", server.updateFeedback)
-	authRoutes.DELETE("/users/:username/feedbacks/:homestay_commented/:id", server.deleteFeedback)
+	authUserRoutes.POST("/users/:username/feedbacks/:homestay_commented", server.createFeedback)
+	authUserRoutes.GET("/homestays/:id/feedbacks", server.listFeedbackByID)
+	authUserRoutes.PUT("/users/:username/feedbacks/:homestay_commented/:id", server.updateFeedback)
+	authUserRoutes.DELETE("/users/:username/feedbacks/:homestay_commented/:id", server.deleteFeedback)
+	// booking
+	authUserRoutes.POST("/users/:username/bookings/:homestay_booking", server.createBooking)
+	authUserRoutes.PUT("/users/:username/bookings/:homestay_booking/:booking_id/cancel", server.cancelBooking)
 
 	// -----------------------------------admin--------------------------------
 	authAdminRoutes := api.Group("/admin").Use(authAdminMiddleware(server.tokenMaker, server.store))
@@ -80,7 +85,13 @@ func (server *Server) setupRouter() {
 	// feedback
 	authAdminRoutes.GET("/homestays/:id/feedbacks", server.listFeedbackByID)
 	authAdminRoutes.DELETE("/users/:username/feedbacks/:homestay_commented/:id", server.adminDeleteFeedback)
+	// booking
+	authAdminRoutes.PUT("/users/:username/bookings/:homestay_booking/:booking_id/checkout", server.checkoutBooking)
 
+	// -----------------------------------staff--------------------------------
+	authStaffRoutes := api.Group("/staff").Use(authStaffMiddleware(server.tokenMaker, server.store))
+	// booking
+	authStaffRoutes.PUT("/users/:username/bookings/:homestay_booking/:booking_id/checkout", server.checkoutBooking)
 	server.router = router
 }
 

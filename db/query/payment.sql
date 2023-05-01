@@ -1,18 +1,21 @@
 -- name: CreatePayment :one
 INSERT INTO payments (
-  id,
   booking_id,
   amount,
   pay_date,
   pay_method,
   status
 ) VALUES (
-  $1, $2, $3, $4, $5, $6
+  $1, $2, $3, $4, $5
 ) RETURNING *;
 
 -- name: GetPayment :one
 SELECT * FROM payments
 WHERE id = $1 LIMIT 1;
+
+-- name: GetPaymentByBookingID :one
+SELECT * FROM payments
+WHERE booking_id = $1 LIMIT 1;
 
 -- name: ListPayments :many
 SELECT * FROM payments

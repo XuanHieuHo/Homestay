@@ -1,0 +1,28 @@
+--------------createUser----------
+{
+    "username": "user3",
+    "password": "15092002",
+    "full_name": "Le Huong",
+    "email": "huong123@gmail.com",
+    "phone": "+841234554888"
+}
+---------------createHomestay-------------
+{
+    "description": "this is description",
+    "address": "HCM City",
+    "number_of_bed": 5,
+    "capacity": 10,
+    "price": 570,
+    "main_image": "main image",
+    "first_image": "first image",
+    "second_image": "second image",
+    "third_image": "third image"
+}
+
+---------------createPromotion-------------
+{
+    "title": "He 2023",
+    "description": "he 2023 chay het minh",
+    "discount_percent": 25,
+    "end_date": 30
+}

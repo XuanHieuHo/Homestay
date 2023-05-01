@@ -9,20 +9,19 @@ import (
 )
 
 type Booking struct {
-	ID              int64     `json:"id"`
+	BookingID       string    `json:"booking_id"`
 	UserBooking     string    `json:"user_booking"`
 	HomestayBooking int64     `json:"homestay_booking"`
-	PromotionID     int64     `json:"promotion_id"`
-	PaymentID       int64     `json:"payment_id"`
+	PromotionID     string    `json:"promotion_id"`
 	Status          string    `json:"status"`
 	BookingDate     time.Time `json:"booking_date"`
 	CheckinDate     time.Time `json:"checkin_date"`
 	CheckoutDate    time.Time `json:"checkout_date"`
 	NumberOfGuest   int32     `json:"number_of_guest"`
 	// must be positive
-	ServiceFee string `json:"service_fee"`
+	ServiceFee float64 `json:"service_fee"`
 	// must be positive
-	Tax string `json:"tax"`
+	Tax float64 `json:"tax"`
 }
 
 type Feedback struct {
@@ -35,23 +34,23 @@ type Feedback struct {
 }
 
 type Homestay struct {
-	ID          int64  `json:"id"`
-	Description string `json:"description"`
-	Address     string `json:"address"`
-	NumberOfBed int32  `json:"number_of_bed"`
-	Capacity    int32  `json:"capacity"`
-	Price       string `json:"price"`
-	Status      string `json:"status"`
-	MainImage   string `json:"main_image"`
-	FirstImage  string `json:"first_image"`
-	SecondImage string `json:"second_image"`
-	ThirdImage  string `json:"third_image"`
+	ID          int64   `json:"id"`
+	Description string  `json:"description"`
+	Address     string  `json:"address"`
+	NumberOfBed int32   `json:"number_of_bed"`
+	Capacity    int32   `json:"capacity"`
+	Price       float64 `json:"price"`
+	Status      string  `json:"status"`
+	MainImage   string  `json:"main_image"`
+	FirstImage  string  `json:"first_image"`
+	SecondImage string  `json:"second_image"`
+	ThirdImage  string  `json:"third_image"`
 }
 
 type Payment struct {
 	ID        int64     `json:"id"`
-	BookingID int64     `json:"booking_id"`
-	Amount    string    `json:"amount"`
+	BookingID string    `json:"booking_id"`
+	Amount    float64   `json:"amount"`
 	PayDate   time.Time `json:"pay_date"`
 	PayMethod string    `json:"pay_method"`
 	Status    string    `json:"status"`
@@ -73,6 +72,7 @@ type User struct {
 	Email             string    `json:"email"`
 	Phone             string    `json:"phone"`
 	Role              string    `json:"role"`
+	IsBooking         bool      `json:"isBooking"`
 	PasswordChangedAt time.Time `json:"password_changed_at"`
 	CreatedAt         time.Time `json:"created_at"`
 }

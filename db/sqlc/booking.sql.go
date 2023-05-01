@@ -12,11 +12,10 @@ import (
 
 const createBooking = `-- name: CreateBooking :one
 INSERT INTO bookings (
-  id,
+  booking_id,
   user_booking,
   homestay_booking,
   promotion_id,
-  payment_id,
   status,
   booking_date,
   checkin_date,
@@ -25,32 +24,30 @@ INSERT INTO bookings (
   service_fee,
   tax
 ) VALUES (
-  $1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12
-) RETURNING id, user_booking, homestay_booking, promotion_id, payment_id, status, booking_date, checkin_date, checkout_date, number_of_guest, service_fee, tax
+  $1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11
+) RETURNING booking_id, user_booking, homestay_booking, promotion_id, status, booking_date, checkin_date, checkout_date, number_of_guest, service_fee, tax
 `
 
 type CreateBookingParams struct {
-	ID              int64     `json:"id"`
+	BookingID       string    `json:"booking_id"`
 	UserBooking     string    `json:"user_booking"`
 	HomestayBooking int64     `json:"homestay_booking"`
-	PromotionID     int64     `json:"promotion_id"`
-	PaymentID       int64     `json:"payment_id"`
+	PromotionID     string    `json:"promotion_id"`
 	Status          string    `json:"status"`
 	BookingDate     time.Time `json:"booking_date"`
 	CheckinDate     time.Time `json:"checkin_date"`
 	CheckoutDate    time.Time `json:"checkout_date"`
 	NumberOfGuest   int32     `json:"number_of_guest"`
-	ServiceFee      string    `json:"service_fee"`
-	Tax             string    `json:"tax"`
+	ServiceFee      float64   `json:"service_fee"`
+	Tax             float64   `json:"tax"`
 }
 
 func (q *Queries) CreateBooking(ctx context.Context, arg CreateBookingParams) (Booking, error) {
 	row := q.db.QueryRowContext(ctx, createBooking,
-		arg.ID,
+		arg.BookingID,
 		arg.UserBooking,
 		arg.HomestayBooking,
 		arg.PromotionID,
-		arg.PaymentID,
 		arg.Status,
 		arg.BookingDate,
 		arg.CheckinDate,
@@ -61,11 +58,10 @@ func (q *Queries) CreateBooking(ctx context.Context, arg CreateBookingParams) (B
 	)
 	var i Booking
 	err := row.Scan(
-		&i.ID,
+		&i.BookingID,
 		&i.UserBooking,
 		&i.HomestayBooking,
 		&i.PromotionID,
-		&i.PaymentID,
 		&i.Status,
 		&i.BookingDate,
 		&i.CheckinDate,
@@ -78,28 +74,34 @@ func (q *Queries) CreateBooking(ctx context.Context, arg CreateBookingParams) (B
 }
 
 const deleteBooking = `-- name: DeleteBooking :exec
-DELETE FROM bookings WHERE id = $1
+DELETE FROM bookings WHERE booking_id = $1
 `
 
-func (q *Queries) DeleteBooking(ctx context.Context, id int64) error {
-	_, err := q.db.ExecContext(ctx, deleteBooking, id)
+func (q *Queries) DeleteBooking(ctx context.Context, bookingID string) error {
+	_, err := q.db.ExecContext(ctx, deleteBooking, bookingID)
 	return err
 }
 
-const getBooking = `-- name: GetBooking :one
-SELECT id, user_booking, homestay_booking, promotion_id, payment_id, status, booking_date, checkin_date, checkout_date, number_of_guest, service_fee, tax FROM bookings
-WHERE id = $1 LIMIT 1
+const finishBooking = `-- name: FinishBooking :one
+UPDATE bookings
+SET status = $2
+WHERE booking_id = $1
+RETURNING booking_id, user_booking, homestay_booking, promotion_id, status, booking_date, checkin_date, checkout_date, number_of_guest, service_fee, tax
 `
 
-func (q *Queries) GetBooking(ctx context.Context, id int64) (Booking, error) {
-	row := q.db.QueryRowContext(ctx, getBooking, id)
+type FinishBookingParams struct {
+	BookingID string `json:"booking_id"`
+	Status    string `json:"status"`
+}
+
+func (q *Queries) FinishBooking(ctx context.Context, arg FinishBookingParams) (Booking, error) {
+	row := q.db.QueryRowContext(ctx, finishBooking, arg.BookingID, arg.Status)
 	var i Booking
 	err := row.Scan(
-		&i.ID,
+		&i.BookingID,
 		&i.UserBooking,
 		&i.HomestayBooking,
 		&i.PromotionID,
-		&i.PaymentID,
 		&i.Status,
 		&i.BookingDate,
 		&i.CheckinDate,
@@ -111,10 +113,87 @@ func (q *Queries) GetBooking(ctx context.Context, id int64) (Booking, error) {
 	return i, err
 }
 
+const getBooking = `-- name: GetBooking :one
+SELECT booking_id, user_booking, homestay_booking, promotion_id, status, booking_date, checkin_date, checkout_date, number_of_guest, service_fee, tax FROM bookings
+WHERE booking_id = $1 LIMIT 1
+`
+
+func (q *Queries) GetBooking(ctx context.Context, bookingID string) (Booking, error) {
+	row := q.db.QueryRowContext(ctx, getBooking, bookingID)
+	var i Booking
+	err := row.Scan(
+		&i.BookingID,
+		&i.UserBooking,
+		&i.HomestayBooking,
+		&i.PromotionID,
+		&i.Status,
+		&i.BookingDate,
+		&i.CheckinDate,
+		&i.CheckoutDate,
+		&i.NumberOfGuest,
+		&i.ServiceFee,
+		&i.Tax,
+	)
+	return i, err
+}
+
+const getBookingByHomestayAndTime = `-- name: GetBookingByHomestayAndTime :many
+SELECT booking_id, user_booking, homestay_booking, promotion_id, status, booking_date, checkin_date, checkout_date, number_of_guest, service_fee, tax FROM bookings
+WHERE homestay_booking = $1 
+AND (
+  (checkin_date >= $2 AND checkout_date <= $3)
+  OR (checkin_date <= $2 AND checkout_date >= $2)
+  OR (checkin_date >= $2 AND checkin_date <= $3 AND checkout_date >= $3)
+  OR (checkin_date = $3)
+  OR (checkout_date = $2)
+)
+`
+
+type GetBookingByHomestayAndTimeParams struct {
+	HomestayBooking int64     `json:"homestay_booking"`
+	CheckinDate     time.Time `json:"checkin_date"`
+	CheckoutDate    time.Time `json:"checkout_date"`
+}
+
+func (q *Queries) GetBookingByHomestayAndTime(ctx context.Context, arg GetBookingByHomestayAndTimeParams) ([]Booking, error) {
+	rows, err := q.db.QueryContext(ctx, getBookingByHomestayAndTime, arg.HomestayBooking, arg.CheckinDate, arg.CheckoutDate)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	items := []Booking{}
+	for rows.Next() {
+		var i Booking
+		if err := rows.Scan(
+			&i.BookingID,
+			&i.UserBooking,
+			&i.HomestayBooking,
+			&i.PromotionID,
+			&i.Status,
+			&i.BookingDate,
+			&i.CheckinDate,
+			&i.CheckoutDate,
+			&i.NumberOfGuest,
+			&i.ServiceFee,
+			&i.Tax,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Close(); err != nil {
+		return nil, err
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
 const listBookingByHomestay = `-- name: ListBookingByHomestay :many
-SELECT id, user_booking, homestay_booking, promotion_id, payment_id, status, booking_date, checkin_date, checkout_date, number_of_guest, service_fee, tax FROM bookings
+SELECT booking_id, user_booking, homestay_booking, promotion_id, status, booking_date, checkin_date, checkout_date, number_of_guest, service_fee, tax FROM bookings
 WHERE homestay_booking = $1
-ORDER BY id
+ORDER BY booking_id
 LIMIT $2
 OFFSET $3
 `
@@ -135,11 +214,10 @@ func (q *Queries) ListBookingByHomestay(ctx context.Context, arg ListBookingByHo
 	for rows.Next() {
 		var i Booking
 		if err := rows.Scan(
-			&i.ID,
+			&i.BookingID,
 			&i.UserBooking,
 			&i.HomestayBooking,
 			&i.PromotionID,
-			&i.PaymentID,
 			&i.Status,
 			&i.BookingDate,
 			&i.CheckinDate,
@@ -162,9 +240,9 @@ func (q *Queries) ListBookingByHomestay(ctx context.Context, arg ListBookingByHo
 }
 
 const listBookingByUser = `-- name: ListBookingByUser :many
-SELECT id, user_booking, homestay_booking, promotion_id, payment_id, status, booking_date, checkin_date, checkout_date, number_of_guest, service_fee, tax FROM bookings
+SELECT booking_id, user_booking, homestay_booking, promotion_id, status, booking_date, checkin_date, checkout_date, number_of_guest, service_fee, tax FROM bookings
 WHERE user_booking = $1
-ORDER BY id
+ORDER BY booking_id
 LIMIT $2
 OFFSET $3
 `
@@ -185,11 +263,10 @@ func (q *Queries) ListBookingByUser(ctx context.Context, arg ListBookingByUserPa
 	for rows.Next() {
 		var i Booking
 		if err := rows.Scan(
-			&i.ID,
+			&i.BookingID,
 			&i.UserBooking,
 			&i.HomestayBooking,
 			&i.PromotionID,
-			&i.PaymentID,
 			&i.Status,
 			&i.BookingDate,
 			&i.CheckinDate,
@@ -213,26 +290,31 @@ func (q *Queries) ListBookingByUser(ctx context.Context, arg ListBookingByUserPa
 
 const updateBooking = `-- name: UpdateBooking :one
 UPDATE bookings
-SET status = $2, checkout_date = $3
-WHERE id = $1
-RETURNING id, user_booking, homestay_booking, promotion_id, payment_id, status, booking_date, checkin_date, checkout_date, number_of_guest, service_fee, tax
+SET status = $2, checkout_date = $3, checkin_date = $4
+WHERE booking_id = $1
+RETURNING booking_id, user_booking, homestay_booking, promotion_id, status, booking_date, checkin_date, checkout_date, number_of_guest, service_fee, tax
 `
 
 type UpdateBookingParams struct {
-	ID           int64     `json:"id"`
+	BookingID    string    `json:"booking_id"`
 	Status       string    `json:"status"`
 	CheckoutDate time.Time `json:"checkout_date"`
+	CheckinDate  time.Time `json:"checkin_date"`
 }
 
 func (q *Queries) UpdateBooking(ctx context.Context, arg UpdateBookingParams) (Booking, error) {
-	row := q.db.QueryRowContext(ctx, updateBooking, arg.ID, arg.Status, arg.CheckoutDate)
+	row := q.db.QueryRowContext(ctx, updateBooking,
+		arg.BookingID,
+		arg.Status,
+		arg.CheckoutDate,
+		arg.CheckinDate,
+	)
 	var i Booking
 	err := row.Scan(
-		&i.ID,
+		&i.BookingID,
 		&i.UserBooking,
 		&i.HomestayBooking,
 		&i.PromotionID,
-		&i.PaymentID,
 		&i.Status,
 		&i.BookingDate,
 		&i.CheckinDate,

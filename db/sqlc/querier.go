@@ -9,22 +9,26 @@ import (
 )
 
 type Querier interface {
+	ChangeUserPassword(ctx context.Context, arg ChangeUserPasswordParams) (User, error)
 	CreateBooking(ctx context.Context, arg CreateBookingParams) (Booking, error)
 	CreateFeedback(ctx context.Context, arg CreateFeedbackParams) (Feedback, error)
 	CreateHomestay(ctx context.Context, arg CreateHomestayParams) (Homestay, error)
 	CreatePayment(ctx context.Context, arg CreatePaymentParams) (Payment, error)
 	CreatePromotion(ctx context.Context, arg CreatePromotionParams) (Promotion, error)
 	CreateUser(ctx context.Context, arg CreateUserParams) (User, error)
-	DeleteBooking(ctx context.Context, id int64) error
+	DeleteBooking(ctx context.Context, bookingID string) error
 	DeleteFeedback(ctx context.Context, id int64) error
 	DeleteHomestay(ctx context.Context, id int64) error
 	DeletePayment(ctx context.Context, id int64) error
 	DeletePromotion(ctx context.Context, id int64) error
 	DeleteUser(ctx context.Context, username string) error
-	GetBooking(ctx context.Context, id int64) (Booking, error)
+	FinishBooking(ctx context.Context, arg FinishBookingParams) (Booking, error)
+	GetBooking(ctx context.Context, bookingID string) (Booking, error)
+	GetBookingByHomestayAndTime(ctx context.Context, arg GetBookingByHomestayAndTimeParams) ([]Booking, error)
 	GetFeedback(ctx context.Context, id int64) (Feedback, error)
 	GetHomestay(ctx context.Context, id int64) (Homestay, error)
 	GetPayment(ctx context.Context, id int64) (Payment, error)
+	GetPaymentByBookingID(ctx context.Context, bookingID string) (Payment, error)
 	GetPromotion(ctx context.Context, title string) (Promotion, error)
 	GetUser(ctx context.Context, username string) (User, error)
 	ListBookingByHomestay(ctx context.Context, arg ListBookingByHomestayParams) ([]Booking, error)
@@ -41,6 +45,7 @@ type Querier interface {
 	UpdatePayment(ctx context.Context, arg UpdatePaymentParams) (Payment, error)
 	UpdatePromotion(ctx context.Context, arg UpdatePromotionParams) (Promotion, error)
 	UpdateUser(ctx context.Context, arg UpdateUserParams) (User, error)
+	UpdateUserStatus(ctx context.Context, arg UpdateUserStatusParams) (User, error)
 }
 
 var _ Querier = (*Queries)(nil)

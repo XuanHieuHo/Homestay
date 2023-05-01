@@ -27,16 +27,16 @@ INSERT INTO homestays (
 `
 
 type CreateHomestayParams struct {
-	Description string `json:"description"`
-	Address     string `json:"address"`
-	NumberOfBed int32  `json:"number_of_bed"`
-	Capacity    int32  `json:"capacity"`
-	Price       string `json:"price"`
-	Status      string `json:"status"`
-	MainImage   string `json:"main_image"`
-	FirstImage  string `json:"first_image"`
-	SecondImage string `json:"second_image"`
-	ThirdImage  string `json:"third_image"`
+	Description string  `json:"description"`
+	Address     string  `json:"address"`
+	NumberOfBed int32   `json:"number_of_bed"`
+	Capacity    int32   `json:"capacity"`
+	Price       float64 `json:"price"`
+	Status      string  `json:"status"`
+	MainImage   string  `json:"main_image"`
+	FirstImage  string  `json:"first_image"`
+	SecondImage string  `json:"second_image"`
+	ThirdImage  string  `json:"third_image"`
 }
 
 func (q *Queries) CreateHomestay(ctx context.Context, arg CreateHomestayParams) (Homestay, error) {
@@ -157,16 +157,16 @@ RETURNING id, description, address, number_of_bed, capacity, price, status, main
 `
 
 type UpdateHomestayInfoParams struct {
-	ID          int64  `json:"id"`
-	Description string `json:"description"`
-	Address     string `json:"address"`
-	NumberOfBed int32  `json:"number_of_bed"`
-	Capacity    int32  `json:"capacity"`
-	Price       string `json:"price"`
-	MainImage   string `json:"main_image"`
-	FirstImage  string `json:"first_image"`
-	SecondImage string `json:"second_image"`
-	ThirdImage  string `json:"third_image"`
+	ID          int64   `json:"id"`
+	Description string  `json:"description"`
+	Address     string  `json:"address"`
+	NumberOfBed int32   `json:"number_of_bed"`
+	Capacity    int32   `json:"capacity"`
+	Price       float64 `json:"price"`
+	MainImage   string  `json:"main_image"`
+	FirstImage  string  `json:"first_image"`
+	SecondImage string  `json:"second_image"`
+	ThirdImage  string  `json:"third_image"`
 }
 
 func (q *Queries) UpdateHomestayInfo(ctx context.Context, arg UpdateHomestayInfoParams) (Homestay, error) {

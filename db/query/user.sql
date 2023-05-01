@@ -6,10 +6,11 @@ INSERT INTO users (
   email,
   phone,
   role,
+  "isBooking",
   password_changed_at,
   created_at
 ) VALUES (
-  $1, $2, $3, $4, $5, $6, $7, $8
+  $1, $2, $3, $4, $5, $6, $7, $8, $9
 ) RETURNING *;
 
 -- name: GetUser :one
@@ -25,6 +26,18 @@ OFFSET $2;
 -- name: UpdateUser :one
 UPDATE users
 SET full_name = $2, email = $3, phone = $4
+WHERE username = $1
+RETURNING *;
+
+-- name: UpdateUserStatus :one
+UPDATE users
+SET "isBooking" = $2
+WHERE username = $1
+RETURNING *;
+
+-- name: ChangeUserPassword :one
+UPDATE users
+SET hashed_password = $2
 WHERE username = $1
 RETURNING *;
 

@@ -16,7 +16,7 @@ import (
 type createUserRequest struct {
 	Username string `json:"username" binding:"required,alphanum"`
 	Password string `json:"password" binding:"required,min=6"`
-	FullName string `json:"full_name" binding:"required,alphanum"`
+	FullName string `json:"full_name" binding:"required"`
 	Email    string `json:"email" binding:"required,email"`
 	Phone    string `json:"phone" binding:"required,e164"`
 }
@@ -59,6 +59,7 @@ func (server *Server) createUser(ctx *gin.Context) {
 		FullName:       req.FullName,
 		Email:          req.Email,
 		Phone:          req.Phone,
+		CreatedAt:      time.Now(),
 	}
 
 	user, err := server.store.CreateUser(ctx, arg)
@@ -334,4 +335,124 @@ func (server *Server) deleteUser(ctx *gin.Context) {
 		return
 	}
 	ctx.JSON(http.StatusOK, "Delete User Successfully")
+}
+
+type checkPasswordRequest struct {
+	Password string `json:"password" binding:"required,min=6"`
+}
+
+func (server *Server) checkPassword(ctx *gin.Context) {
+	var reqUsername getUserRequest
+	var reqPassword checkPasswordRequest
+
+	if err := ctx.ShouldBindJSON(&reqPassword); err != nil {
+		ctx.JSON(http.StatusBadRequest, errorResponse(err))
+		return
+	}
+
+	if err := ctx.ShouldBindUri(&reqUsername); err != nil {
+		ctx.JSON(http.StatusBadRequest, errorResponse(err))
+		return
+	}
+
+	user, err := server.store.GetUser(ctx, reqUsername.Username)
+	if err != nil {
+		if err == sql.ErrNoRows {
+			ctx.JSON(http.StatusNotFound, errorResponse(err))
+			return
+		}
+		ctx.JSON(http.StatusInternalServerError, errorResponse(err))
+		return
+	}
+
+	authPayload := ctx.MustGet(authorizationPayloadKey).(*token.Payload)
+	if user.Username != authPayload.Username {
+		err := errors.New("user doesn't belong to the authenticated user")
+		ctx.JSON(http.StatusUnauthorized, errorResponse(err))
+		return
+	}
+
+	err = util.CheckPassword(reqPassword.Password, user.HashedPassword)
+	if err != nil {
+		ctx.JSON(http.StatusUnauthorized, errorResponse(err))
+		return
+	}
+
+	ctx.JSON(http.StatusOK, "the password is correct")
+}
+
+type newPasswordRequest struct {
+	OriginalPassword string `json:"original_password" binding:"required,min=6"`
+	FirstPassword    string `json:"first_password" binding:"required,min=6"`
+	SecondPassword   string `json:"second_password" binding:"required,min=6"`
+}
+
+func (server *Server) changePassword(ctx *gin.Context) {
+	var reqUsername getUserRequest
+	var reqPassword newPasswordRequest
+
+	if err := ctx.ShouldBindJSON(&reqPassword); err != nil {
+		ctx.JSON(http.StatusBadRequest, errorResponse(err))
+		return
+	}
+
+	if err := ctx.ShouldBindUri(&reqUsername); err != nil {
+		ctx.JSON(http.StatusBadRequest, errorResponse(err))
+		return
+	}
+
+	user, err := server.store.GetUser(ctx, reqUsername.Username)
+	if err != nil {
+		if err == sql.ErrNoRows {
+			ctx.JSON(http.StatusNotFound, errorResponse(err))
+			return
+		}
+		ctx.JSON(http.StatusInternalServerError, errorResponse(err))
+		return
+	}
+
+	authPayload := ctx.MustGet(authorizationPayloadKey).(*token.Payload)
+	if user.Username != authPayload.Username {
+		err := errors.New("user doesn't belong to the authenticated user")
+		ctx.JSON(http.StatusUnauthorized, errorResponse(err))
+		return
+	}
+
+	err = util.CheckPassword(reqPassword.OriginalPassword, user.HashedPassword)
+	if err != nil {
+		ctx.JSON(http.StatusUnauthorized, errorResponse(err))
+		return
+	}
+
+	if reqPassword.FirstPassword != reqPassword.SecondPassword {
+		err := errors.New("two password don't match")
+		ctx.JSON(http.StatusBadRequest, errorResponse(err))
+		return
+	}
+
+	hashedPassword, err := util.HashPassword(reqPassword.FirstPassword)
+	if err != nil {
+		ctx.JSON(http.StatusInternalServerError, errorResponse(err))
+		return
+	}
+
+	arg := db.ChangeUserPasswordParams{
+		Username:       reqUsername.Username,
+		HashedPassword: hashedPassword,
+	}
+
+	_, err = server.store.ChangeUserPassword(ctx, arg)
+	if err != nil {
+		if pqErr, ok := err.(*pq.Error); ok {
+			switch pqErr.Code.Name() {
+			case "foreign_key_violation", "unique_violation":
+				ctx.JSON(http.StatusForbidden, errorResponse(err))
+				return
+			}
+		}
+		ctx.JSON(http.StatusInternalServerError, errorResponse(err))
+		return
+	}
+
+	ctx.JSON(http.StatusOK, "password has been changed successfully")
 }

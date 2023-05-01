@@ -12,21 +12,19 @@ import (
 
 const createPayment = `-- name: CreatePayment :one
 INSERT INTO payments (
-  id,
   booking_id,
   amount,
   pay_date,
   pay_method,
   status
 ) VALUES (
-  $1, $2, $3, $4, $5, $6
+  $1, $2, $3, $4, $5
 ) RETURNING id, booking_id, amount, pay_date, pay_method, status
 `
 
 type CreatePaymentParams struct {
-	ID        int64     `json:"id"`
-	BookingID int64     `json:"booking_id"`
-	Amount    string    `json:"amount"`
+	BookingID string    `json:"booking_id"`
+	Amount    float64   `json:"amount"`
 	PayDate   time.Time `json:"pay_date"`
 	PayMethod string    `json:"pay_method"`
 	Status    string    `json:"status"`
@@ -34,7 +32,6 @@ type CreatePaymentParams struct {
 
 func (q *Queries) CreatePayment(ctx context.Context, arg CreatePaymentParams) (Payment, error) {
 	row := q.db.QueryRowContext(ctx, createPayment,
-		arg.ID,
 		arg.BookingID,
 		arg.Amount,
 		arg.PayDate,
@@ -69,6 +66,25 @@ WHERE id = $1 LIMIT 1
 
 func (q *Queries) GetPayment(ctx context.Context, id int64) (Payment, error) {
 	row := q.db.QueryRowContext(ctx, getPayment, id)
+	var i Payment
+	err := row.Scan(
+		&i.ID,
+		&i.BookingID,
+		&i.Amount,
+		&i.PayDate,
+		&i.PayMethod,
+		&i.Status,
+	)
+	return i, err
+}
+
+const getPaymentByBookingID = `-- name: GetPaymentByBookingID :one
+SELECT id, booking_id, amount, pay_date, pay_method, status FROM payments
+WHERE booking_id = $1 LIMIT 1
+`
+
+func (q *Queries) GetPaymentByBookingID(ctx context.Context, bookingID string) (Payment, error) {
+	row := q.db.QueryRowContext(ctx, getPaymentByBookingID, bookingID)
 	var i Payment
 	err := row.Scan(
 		&i.ID,
