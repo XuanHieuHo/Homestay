@@ -39,6 +39,9 @@ func (server *Server) setupRouter() {
 	// login and register
 	api.POST("/login", server.loginUser)
 	api.POST("/register", server.createUser)
+	api.POST("/forgotpassword", server.sendResetPasswordToken)
+	api.POST("/resetpassword", server.resetPassword)
+	api.POST("/tokens/renew_access", server.renewAccessToken)
 
 	// -----------------------------------user--------------------------------
 	authUserRoutes := api.Group("/").Use(authMiddleware(server.tokenMaker))
@@ -61,6 +64,9 @@ func (server *Server) setupRouter() {
 	// booking
 	authUserRoutes.POST("/users/:username/bookings/:homestay_booking", server.createBooking)
 	authUserRoutes.PUT("/users/:username/bookings/:homestay_booking/:booking_id/cancel", server.cancelBooking)
+	// payment
+	authUserRoutes.GET("/users/:username/payment/:booking_id", server.userGetPaymentByBookingID)
+	authUserRoutes.GET("/users/:username/payment/unpaid", server.userListPaymentUnpaid)
 
 	// -----------------------------------admin--------------------------------
 	authAdminRoutes := api.Group("/admin").Use(authAdminMiddleware(server.tokenMaker, server.store))
@@ -87,6 +93,11 @@ func (server *Server) setupRouter() {
 	authAdminRoutes.DELETE("/users/:username/feedbacks/:homestay_commented/:id", server.adminDeleteFeedback)
 	// booking
 	authAdminRoutes.PUT("/users/:username/bookings/:homestay_booking/:booking_id/checkout", server.checkoutBooking)
+	// payment
+	authAdminRoutes.GET("/users/:username/payment/:booking_id", server.adminGetPaymentByBookingID)
+	authAdminRoutes.GET("/payments/unpaid", server.adminListPaymentUnpaid)
+	authAdminRoutes.POST("/income/monthly", server.getTotalIncomeMonthly)
+	authAdminRoutes.POST("/income/yearly", server.getTotalIncomeYearly)
 
 	// -----------------------------------staff--------------------------------
 	authStaffRoutes := api.Group("/staff").Use(authStaffMiddleware(server.tokenMaker, server.store))

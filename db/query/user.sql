@@ -17,6 +17,20 @@ INSERT INTO users (
 SELECT * FROM users
 WHERE username = $1 LIMIT 1;
 
+-- name: GetUserByEmail :one
+SELECT * FROM users
+WHERE email = $1 LIMIT 1;
+
+-- name: GetUserByResetPassToken :one
+SELECT * FROM users
+WHERE reset_password_token = $1 LIMIT 1;
+
+-- name: UpdateResetPasswordToken :one
+UPDATE users
+SET reset_password_token = $2, rspassword_token_expired_at = $3
+WHERE username = $1
+RETURNING *;
+
 -- name: ListUsers :many
 SELECT * FROM users
 ORDER BY username
@@ -37,7 +51,7 @@ RETURNING *;
 
 -- name: ChangeUserPassword :one
 UPDATE users
-SET hashed_password = $2
+SET hashed_password = $2, password_changed_at = $3
 WHERE username = $1
 RETURNING *;
 

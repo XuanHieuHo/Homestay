@@ -6,6 +6,8 @@ package db
 
 import (
 	"context"
+
+	"github.com/google/uuid"
 )
 
 type Querier interface {
@@ -15,6 +17,7 @@ type Querier interface {
 	CreateHomestay(ctx context.Context, arg CreateHomestayParams) (Homestay, error)
 	CreatePayment(ctx context.Context, arg CreatePaymentParams) (Payment, error)
 	CreatePromotion(ctx context.Context, arg CreatePromotionParams) (Promotion, error)
+	CreateSession(ctx context.Context, arg CreateSessionParams) (Session, error)
 	CreateUser(ctx context.Context, arg CreateUserParams) (User, error)
 	DeleteBooking(ctx context.Context, bookingID string) error
 	DeleteFeedback(ctx context.Context, id int64) error
@@ -30,20 +33,26 @@ type Querier interface {
 	GetPayment(ctx context.Context, id int64) (Payment, error)
 	GetPaymentByBookingID(ctx context.Context, bookingID string) (Payment, error)
 	GetPromotion(ctx context.Context, title string) (Promotion, error)
+	GetSession(ctx context.Context, id uuid.UUID) (Session, error)
 	GetUser(ctx context.Context, username string) (User, error)
+	GetUserByEmail(ctx context.Context, email string) (User, error)
+	GetUserByResetPassToken(ctx context.Context, resetPasswordToken string) (User, error)
 	ListBookingByHomestay(ctx context.Context, arg ListBookingByHomestayParams) ([]Booking, error)
 	ListBookingByUser(ctx context.Context, arg ListBookingByUserParams) ([]Booking, error)
 	ListFeedbacks(ctx context.Context, arg ListFeedbacksParams) ([]Feedback, error)
 	ListHomestays(ctx context.Context, arg ListHomestaysParams) ([]Homestay, error)
 	ListPayments(ctx context.Context, arg ListPaymentsParams) ([]Payment, error)
+	ListPaymentsUnpaid(ctx context.Context, arg ListPaymentsUnpaidParams) ([]Payment, error)
 	ListPromotions(ctx context.Context, arg ListPromotionsParams) ([]Promotion, error)
 	ListUsers(ctx context.Context, arg ListUsersParams) ([]User, error)
+	TotalIncome(ctx context.Context, arg TotalIncomeParams) (float64, error)
 	UpdateBooking(ctx context.Context, arg UpdateBookingParams) (Booking, error)
 	UpdateFeedback(ctx context.Context, arg UpdateFeedbackParams) (Feedback, error)
 	UpdateHomestayInfo(ctx context.Context, arg UpdateHomestayInfoParams) (Homestay, error)
 	UpdateHomestayStatus(ctx context.Context, arg UpdateHomestayStatusParams) (Homestay, error)
 	UpdatePayment(ctx context.Context, arg UpdatePaymentParams) (Payment, error)
 	UpdatePromotion(ctx context.Context, arg UpdatePromotionParams) (Promotion, error)
+	UpdateResetPasswordToken(ctx context.Context, arg UpdateResetPasswordTokenParams) (User, error)
 	UpdateUser(ctx context.Context, arg UpdateUserParams) (User, error)
 	UpdateUserStatus(ctx context.Context, arg UpdateUserStatusParams) (User, error)
 }

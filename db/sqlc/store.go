@@ -131,14 +131,6 @@ func (store *SQLStore) BookingTx(ctx context.Context, arg BookingTxParams) (Book
 			return err
 		}
 
-		// for _, booking := range bookings {
-		// 	if booking.Status == "cancel" {
-		// 		continue
-		// 	} else {
-		// 		return fmt.Errorf("this homestay has been booked in this time 1")
-		// 	}
-		// }
-
 		if len(bookings) > 0 {
 			return fmt.Errorf("this homestay has been booked in this time 1") 
 		}

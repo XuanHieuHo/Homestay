@@ -7,7 +7,9 @@ CREATE TABLE "users" (
   "role" varchar NOT NULL,
   "isBooking" boolean NOT NULL DEFAULT false,
   "password_changed_at" timestamptz NOT NULL DEFAULT '0001-01-01 00:00:00Z',
-  "created_at" Date NOT NULL DEFAULT (now())
+  "created_at" Date NOT NULL DEFAULT (now()),
+  "reset_password_token" varchar NOT NULL DEFAULT 'abc',
+  "rspassword_token_expired_at" timestamptz NOT NULL DEFAULT '0001-01-01 00:00:00Z'
 );
 
 CREATE TABLE "homestays" (

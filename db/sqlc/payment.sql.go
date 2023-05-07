@@ -139,6 +139,70 @@ func (q *Queries) ListPayments(ctx context.Context, arg ListPaymentsParams) ([]P
 	return items, nil
 }
 
+const listPaymentsUnpaid = `-- name: ListPaymentsUnpaid :many
+SELECT id, booking_id, amount, pay_date, pay_method, status FROM payments
+WHERE status = $3
+ORDER BY id
+LIMIT $1
+OFFSET $2
+`
+
+type ListPaymentsUnpaidParams struct {
+	Limit  int32  `json:"limit"`
+	Offset int32  `json:"offset"`
+	Status string `json:"status"`
+}
+
+func (q *Queries) ListPaymentsUnpaid(ctx context.Context, arg ListPaymentsUnpaidParams) ([]Payment, error) {
+	rows, err := q.db.QueryContext(ctx, listPaymentsUnpaid, arg.Limit, arg.Offset, arg.Status)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	items := []Payment{}
+	for rows.Next() {
+		var i Payment
+		if err := rows.Scan(
+			&i.ID,
+			&i.BookingID,
+			&i.Amount,
+			&i.PayDate,
+			&i.PayMethod,
+			&i.Status,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Close(); err != nil {
+		return nil, err
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
+const totalIncome = `-- name: TotalIncome :one
+SELECT CAST(SUM(amount) AS FLOAT) AS TotalIncome FROM payments
+WHERE (
+pay_date BETWEEN $1 AND $2
+AND status = $3)
+`
+
+type TotalIncomeParams struct {
+	PayDate   time.Time `json:"pay_date"`
+	PayDate_2 time.Time `json:"pay_date_2"`
+	Status    string    `json:"status"`
+}
+
+func (q *Queries) TotalIncome(ctx context.Context, arg TotalIncomeParams) (float64, error) {
+	row := q.db.QueryRowContext(ctx, totalIncome, arg.PayDate, arg.PayDate_2, arg.Status)
+	var totalincome float64
+	err := row.Scan(&totalincome)
+	return totalincome, err
+}
+
 const updatePayment = `-- name: UpdatePayment :one
 UPDATE payments
 SET pay_date = $2, pay_method = $3, status = $4

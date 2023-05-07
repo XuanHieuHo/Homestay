@@ -3,13 +3,17 @@ package api
 import (
 	"database/sql"
 	"errors"
+	"fmt"
+	"log"
 	"net/http"
 	"time"
 
 	db "github.com/XuanHieuHo/homestay/db/sqlc"
+	"github.com/XuanHieuHo/homestay/mail"
 	"github.com/XuanHieuHo/homestay/token"
 	"github.com/XuanHieuHo/homestay/util"
 	"github.com/gin-gonic/gin"
+	"github.com/google/uuid"
 	"github.com/lib/pq"
 )
 
@@ -32,12 +36,11 @@ type userResponse struct {
 
 func newUserResponse(user db.User) userResponse {
 	return userResponse{
-		Username:          user.Username,
-		FullName:          user.FullName,
-		Email:             user.Email,
-		Phone:             user.Phone,
-		PasswordChangedAt: user.PasswordChangedAt,
-		CreatedAt:         user.CreatedAt,
+		Username:  user.Username,
+		FullName:  user.FullName,
+		Email:     user.Email,
+		Phone:     user.Phone,
+		CreatedAt: user.CreatedAt,
 	}
 }
 
@@ -84,9 +87,12 @@ type loginUserRequest struct {
 }
 
 type loginUserResponse struct {
-	AccessToken          string       `json:"access_token"`
-	AccessTokenExpiresAt time.Time    `json:"access_token_expires_at"`
-	User                 userResponse `json:"user"`
+	SessionID             uuid.UUID    `json:"session_id"`
+	AccessToken           string       `json:"access_token"`
+	AccessTokenExpiresAt  time.Time    `json:"access_token_expires_at"`
+	RefreshToken          string       `json:"refresh_token"`
+	RefreshTokenExpiresAt time.Time    `json:"refresh_token_expires_at"`
+	User                  userResponse `json:"user"`
 }
 
 func (server *Server) loginUser(ctx *gin.Context) {
@@ -116,19 +122,228 @@ func (server *Server) loginUser(ctx *gin.Context) {
 		user.Username,
 		server.config.AccessTokenDuration,
 	)
+	if err != nil {
+		ctx.JSON(http.StatusInternalServerError, errorResponse(err))
+		return
+	}
 
+	refreshToken, refreshPayload, err := server.tokenMaker.CreateToken(
+		user.Username,
+		server.config.RefreshTokenDuration,
+	)
+	if err != nil {
+		ctx.JSON(http.StatusInternalServerError, errorResponse(err))
+		return
+	}
+
+	session, err := server.store.CreateSession(ctx, db.CreateSessionParams{
+		ID:           refreshPayload.ID,
+		Username:     user.Username,
+		RefreshToken: refreshToken,
+		UserAgent:    ctx.Request.UserAgent(),
+		ClientIp:     ctx.ClientIP(),
+		IsBlocked:    false,
+		ExpiresAt:    refreshPayload.ExpiredAt,
+	})
 	if err != nil {
 		ctx.JSON(http.StatusInternalServerError, errorResponse(err))
 		return
 	}
 
 	rsp := loginUserResponse{
-		AccessToken:          accessToken,
-		AccessTokenExpiresAt: accessPayload.ExpiredAt,
-		User:                 newUserResponse(user),
+		SessionID:             session.ID,
+		AccessToken:           accessToken,
+		AccessTokenExpiresAt:  accessPayload.ExpiredAt,
+		RefreshToken:          refreshToken,
+		RefreshTokenExpiresAt: refreshPayload.ExpiredAt,
+		User:                  newUserResponse(user),
+	}
+	ctx.JSON(http.StatusOK, rsp)
+}
+
+type forgotPasswordRequest struct {
+	Username string `json:"username" binding:"required,alphanum"`
+	Email    string `json:"email" binding:"required,email"`
+}
+
+func (server *Server) sendResetPasswordToken(ctx *gin.Context) {
+	config, err := util.LoadConfig("..")
+	if err != nil {
+		log.Fatal("Cannot load config: ", err)
+	}
+	var req forgotPasswordRequest
+
+	if err := ctx.ShouldBindJSON(&req); err != nil {
+		ctx.JSON(http.StatusBadRequest, errorResponse(err))
+		return
 	}
 
-	ctx.JSON(http.StatusOK, rsp)
+	user, err := server.store.GetUser(ctx, req.Username)
+	if err != nil {
+		if err == sql.ErrNoRows {
+			ctx.JSON(http.StatusNotFound, errorResponse(err))
+			return
+		}
+		ctx.JSON(http.StatusInternalServerError, errorResponse(err))
+		return
+	}
+
+	userEmail, err := server.store.GetUserByEmail(ctx, req.Email)
+	if err != nil {
+		if err == sql.ErrNoRows {
+			ctx.JSON(http.StatusNotFound, errorResponse(err))
+			return
+		}
+		ctx.JSON(http.StatusInternalServerError, errorResponse(err))
+		return
+	}
+
+	if user.Username != userEmail.Username {
+		ctx.JSON(http.StatusBadRequest, errorResponse(err))
+		return
+	}
+
+	resetToken := util.RandomResetPasswordToken()
+
+	_, err = server.store.UpdateResetPasswordToken(ctx, db.UpdateResetPasswordTokenParams{
+		Username:                 user.Username,
+		ResetPasswordToken:       resetToken,
+		RspasswordTokenExpiredAt: time.Now().Add(10 * time.Minute),
+	})
+	if err != nil {
+		ctx.JSON(http.StatusInternalServerError, errorResponse(err))
+		return
+	}
+
+	sender := mail.NewGmailSender(config.EmailSenderName, config.EmailSenderAddress, config.EmailSenderPassword)
+	subject := "Homestay verification code"
+	content := fmt.Sprintf(`
+		<html>
+	  	<head>
+	    <title>Mã xác nhận đổi mật khẩu</title>
+	    <style>
+	      * {
+	        box-sizing: border-box;
+	        margin: 0;
+	        padding: 0;
+	      }
+
+	      body {
+	        background-color: #f8f8f8;
+	        font-family: sans-serif;
+	        line-height: 1.5;
+	        color: #333;
+	      }
+
+	      .container {
+	        max-width: 800px;
+	        margin: 0 auto;
+	        padding: 20px;
+	        background-color: #fff;
+	        border-radius: 5px;
+	        box-shadow: 0px 0px 10px rgba(0, 0, 0, 0.1);
+	      }
+
+	      h1 {
+	        font-size: 24px;
+	        font-weight: bold;
+	        margin-bottom: 20px;
+	      }
+	      p {
+	        font-size: 18px;
+	        margin-bottom: 20px;
+	      }
+	    </style>
+	  </head>
+	  <body>
+	    <div class="container">
+	      <h1>Giới thiệu Homestay</h1>
+	      <p>
+	        Chào mừng đến với Homestay của chúng tôi! Chúng tôi cung cấp các dịch
+	        vụ lưu trú tại nhà ấm cúng và tiện nghi để bạn có một kỳ nghỉ tuyệt vời.
+	        Với các phòng ngủ được trang bị đầy đủ tiện nghi, chúng tôi hy vọng sẽ
+	        mang đến cho bạn một trải nghiệm nghỉ dưỡng tuyệt vời.
+	      </p>
+	      <p>
+	        Đây là mã xác nhận của bạn: %s
+	      </p>
+	    </div>
+	  </body>
+	</html>
+		`, resetToken)
+
+	to := []string{user.Email}
+
+	err = sender.SendEmail(subject, content, to, nil, nil, nil)
+	if err != nil {
+		ctx.JSON(http.StatusInternalServerError, errorResponse(err))
+		return
+	}
+
+	ctx.JSON(http.StatusOK, "reset password link has been sent to your email")
+
+}
+
+type resetPasswordRequest struct {
+	Username       string `json:"username" binding:"required,alphanum"`
+	OTPCode        string `json:"otpcode" binding:"required"`
+	FirstPassword  string `json:"first_password" binding:"required,min=6"`
+	SecondPassword string `json:"second_password" binding:"required,min=6"`
+}
+
+func (server *Server) resetPassword(ctx *gin.Context) {
+	var req resetPasswordRequest
+	if err := ctx.ShouldBindJSON(&req); err != nil {
+		ctx.JSON(http.StatusBadRequest, errorResponse(err))
+		return
+	}
+
+	user, err := server.store.GetUser(ctx, req.Username)
+	if err != nil {
+		if err == sql.ErrNoRows {
+			ctx.JSON(http.StatusNotFound, errorResponse(err))
+			return
+		}
+		ctx.JSON(http.StatusInternalServerError, errorResponse(err))
+		return
+	}
+
+	if user.ResetPasswordToken != req.OTPCode {
+		err := errors.New("opt code is wrong")
+		ctx.JSON(http.StatusBadRequest, errorResponse(err))
+		return
+	}
+
+	if time.Now().After(user.RspasswordTokenExpiredAt) {
+		err := errors.New("opt code has expired")
+		ctx.JSON(http.StatusBadRequest, errorResponse(err))
+		return
+	}
+
+	if req.FirstPassword != req.SecondPassword {
+		err := errors.New("two password don't match")
+		ctx.JSON(http.StatusBadRequest, errorResponse(err))
+		return
+	}
+
+	hashedPassword, err := util.HashPassword(req.FirstPassword)
+	if err != nil {
+		ctx.JSON(http.StatusInternalServerError, errorResponse(err))
+		return
+	}
+
+	arg := db.ChangeUserPasswordParams{
+		Username:          user.Username,
+		HashedPassword:    hashedPassword,
+		PasswordChangedAt: time.Now(),
+	}
+
+	_, err = server.store.ChangeUserPassword(ctx, arg)
+	if err != nil {
+		ctx.JSON(http.StatusInternalServerError, errorResponse(err))
+		return
+	}
+	ctx.JSON(http.StatusOK, "password has been changed successfully")
 }
 
 type getUserRequest struct {
@@ -437,8 +652,9 @@ func (server *Server) changePassword(ctx *gin.Context) {
 	}
 
 	arg := db.ChangeUserPasswordParams{
-		Username:       reqUsername.Username,
-		HashedPassword: hashedPassword,
+		Username:          reqUsername.Username,
+		HashedPassword:    hashedPassword,
+		PasswordChangedAt: time.Now(),
 	}
 
 	_, err = server.store.ChangeUserPassword(ctx, arg)

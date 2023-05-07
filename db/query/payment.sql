@@ -23,6 +23,19 @@ ORDER BY id
 LIMIT $1
 OFFSET $2;
 
+-- name: ListPaymentsUnpaid :many
+SELECT * FROM payments
+WHERE status = $3
+ORDER BY id
+LIMIT $1
+OFFSET $2;
+
+-- name: TotalIncome :one
+SELECT CAST(SUM(amount) AS FLOAT) AS TotalIncome FROM payments
+WHERE (
+pay_date BETWEEN $1 AND $2
+AND status = $3);
+
 -- name: UpdatePayment :one
 UPDATE payments
 SET pay_date = $2, pay_method = $3, status = $4

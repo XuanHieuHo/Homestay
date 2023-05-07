@@ -14,10 +14,19 @@ migrateup:
 migratedown:
 	migrate -path db/migration -database "$(DB_URL)" -verbose down
 
+migrateup1:
+	migrate -path db/migration -database "$(DB_URL)" -verbose up 1
+
+migratedown1:
+	migrate -path db/migration -database "$(DB_URL)" -verbose down 1
+
 gen:
 	docker run --rm -v "D:\Study\Homestay:/src" -w /src kjconroy/sqlc generate
 
 server:
 	go run main.go
 
-.PHONY: postgres createdb dropdb migrateup migratedown gen
+new_migration:
+	migrate create -ext sql -dir db/migration -seq $(name)
+
+.PHONY: postgres createdb dropdb migrateup migratedown gen new_migration

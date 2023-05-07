@@ -2,9 +2,11 @@ package api
 
 import (
 	"database/sql"
+	"log"
 	"net/http"
 
 	db "github.com/XuanHieuHo/homestay/db/sqlc"
+	"github.com/XuanHieuHo/homestay/util"
 	"github.com/cloudinary/cloudinary-go/v2"
 	"github.com/cloudinary/cloudinary-go/v2/api/uploader"
 	"github.com/gin-gonic/gin"
@@ -25,7 +27,11 @@ type createHomestayRequest struct {
 
 func (server *Server) createHomestay(ctx *gin.Context) {
 	// create connection to cloudinary
-	cld, err := cloudinary.NewFromParams("dykfwexjo", "858578244729375", "o254nG-90vnOpEOPlXacNz_G0X4")
+	config, err := util.LoadConfig("..")
+	if err != nil {
+		log.Fatal("Cannot load config: ", err)
+	}
+	cld, err := cloudinary.NewFromParams(config.CloudName, config.APIKey, config.APISecret)
 	if err != nil {
 		ctx.JSON(http.StatusInternalServerError, errorResponse(err))
 		return

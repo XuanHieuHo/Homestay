@@ -12,18 +12,19 @@ import (
 
 const changeUserPassword = `-- name: ChangeUserPassword :one
 UPDATE users
-SET hashed_password = $2
+SET hashed_password = $2, password_changed_at = $3
 WHERE username = $1
-RETURNING username, hashed_password, full_name, email, phone, role, "isBooking", password_changed_at, created_at
+RETURNING username, hashed_password, full_name, email, phone, role, "isBooking", password_changed_at, created_at, reset_password_token, rspassword_token_expired_at
 `
 
 type ChangeUserPasswordParams struct {
-	Username       string `json:"username"`
-	HashedPassword string `json:"hashed_password"`
+	Username          string    `json:"username"`
+	HashedPassword    string    `json:"hashed_password"`
+	PasswordChangedAt time.Time `json:"password_changed_at"`
 }
 
 func (q *Queries) ChangeUserPassword(ctx context.Context, arg ChangeUserPasswordParams) (User, error) {
-	row := q.db.QueryRowContext(ctx, changeUserPassword, arg.Username, arg.HashedPassword)
+	row := q.db.QueryRowContext(ctx, changeUserPassword, arg.Username, arg.HashedPassword, arg.PasswordChangedAt)
 	var i User
 	err := row.Scan(
 		&i.Username,
@@ -35,6 +36,8 @@ func (q *Queries) ChangeUserPassword(ctx context.Context, arg ChangeUserPassword
 		&i.IsBooking,
 		&i.PasswordChangedAt,
 		&i.CreatedAt,
+		&i.ResetPasswordToken,
+		&i.RspasswordTokenExpiredAt,
 	)
 	return i, err
 }
@@ -52,7 +55,7 @@ INSERT INTO users (
   created_at
 ) VALUES (
   $1, $2, $3, $4, $5, $6, $7, $8, $9
-) RETURNING username, hashed_password, full_name, email, phone, role, "isBooking", password_changed_at, created_at
+) RETURNING username, hashed_password, full_name, email, phone, role, "isBooking", password_changed_at, created_at, reset_password_token, rspassword_token_expired_at
 `
 
 type CreateUserParams struct {
@@ -90,6 +93,8 @@ func (q *Queries) CreateUser(ctx context.Context, arg CreateUserParams) (User, e
 		&i.IsBooking,
 		&i.PasswordChangedAt,
 		&i.CreatedAt,
+		&i.ResetPasswordToken,
+		&i.RspasswordTokenExpiredAt,
 	)
 	return i, err
 }
@@ -104,7 +109,7 @@ func (q *Queries) DeleteUser(ctx context.Context, username string) error {
 }
 
 const getUser = `-- name: GetUser :one
-SELECT username, hashed_password, full_name, email, phone, role, "isBooking", password_changed_at, created_at FROM users
+SELECT username, hashed_password, full_name, email, phone, role, "isBooking", password_changed_at, created_at, reset_password_token, rspassword_token_expired_at FROM users
 WHERE username = $1 LIMIT 1
 `
 
@@ -121,12 +126,62 @@ func (q *Queries) GetUser(ctx context.Context, username string) (User, error) {
 		&i.IsBooking,
 		&i.PasswordChangedAt,
 		&i.CreatedAt,
+		&i.ResetPasswordToken,
+		&i.RspasswordTokenExpiredAt,
+	)
+	return i, err
+}
+
+const getUserByEmail = `-- name: GetUserByEmail :one
+SELECT username, hashed_password, full_name, email, phone, role, "isBooking", password_changed_at, created_at, reset_password_token, rspassword_token_expired_at FROM users
+WHERE email = $1 LIMIT 1
+`
+
+func (q *Queries) GetUserByEmail(ctx context.Context, email string) (User, error) {
+	row := q.db.QueryRowContext(ctx, getUserByEmail, email)
+	var i User
+	err := row.Scan(
+		&i.Username,
+		&i.HashedPassword,
+		&i.FullName,
+		&i.Email,
+		&i.Phone,
+		&i.Role,
+		&i.IsBooking,
+		&i.PasswordChangedAt,
+		&i.CreatedAt,
+		&i.ResetPasswordToken,
+		&i.RspasswordTokenExpiredAt,
+	)
+	return i, err
+}
+
+const getUserByResetPassToken = `-- name: GetUserByResetPassToken :one
+SELECT username, hashed_password, full_name, email, phone, role, "isBooking", password_changed_at, created_at, reset_password_token, rspassword_token_expired_at FROM users
+WHERE reset_password_token = $1 LIMIT 1
+`
+
+func (q *Queries) GetUserByResetPassToken(ctx context.Context, resetPasswordToken string) (User, error) {
+	row := q.db.QueryRowContext(ctx, getUserByResetPassToken, resetPasswordToken)
+	var i User
+	err := row.Scan(
+		&i.Username,
+		&i.HashedPassword,
+		&i.FullName,
+		&i.Email,
+		&i.Phone,
+		&i.Role,
+		&i.IsBooking,
+		&i.PasswordChangedAt,
+		&i.CreatedAt,
+		&i.ResetPasswordToken,
+		&i.RspasswordTokenExpiredAt,
 	)
 	return i, err
 }
 
 const listUsers = `-- name: ListUsers :many
-SELECT username, hashed_password, full_name, email, phone, role, "isBooking", password_changed_at, created_at FROM users
+SELECT username, hashed_password, full_name, email, phone, role, "isBooking", password_changed_at, created_at, reset_password_token, rspassword_token_expired_at FROM users
 ORDER BY username
 LIMIT $1
 OFFSET $2
@@ -156,6 +211,8 @@ func (q *Queries) ListUsers(ctx context.Context, arg ListUsersParams) ([]User, e
 			&i.IsBooking,
 			&i.PasswordChangedAt,
 			&i.CreatedAt,
+			&i.ResetPasswordToken,
+			&i.RspasswordTokenExpiredAt,
 		); err != nil {
 			return nil, err
 		}
@@ -170,11 +227,43 @@ func (q *Queries) ListUsers(ctx context.Context, arg ListUsersParams) ([]User, e
 	return items, nil
 }
 
+const updateResetPasswordToken = `-- name: UpdateResetPasswordToken :one
+UPDATE users
+SET reset_password_token = $2, rspassword_token_expired_at = $3
+WHERE username = $1
+RETURNING username, hashed_password, full_name, email, phone, role, "isBooking", password_changed_at, created_at, reset_password_token, rspassword_token_expired_at
+`
+
+type UpdateResetPasswordTokenParams struct {
+	Username                 string    `json:"username"`
+	ResetPasswordToken       string    `json:"reset_password_token"`
+	RspasswordTokenExpiredAt time.Time `json:"rspassword_token_expired_at"`
+}
+
+func (q *Queries) UpdateResetPasswordToken(ctx context.Context, arg UpdateResetPasswordTokenParams) (User, error) {
+	row := q.db.QueryRowContext(ctx, updateResetPasswordToken, arg.Username, arg.ResetPasswordToken, arg.RspasswordTokenExpiredAt)
+	var i User
+	err := row.Scan(
+		&i.Username,
+		&i.HashedPassword,
+		&i.FullName,
+		&i.Email,
+		&i.Phone,
+		&i.Role,
+		&i.IsBooking,
+		&i.PasswordChangedAt,
+		&i.CreatedAt,
+		&i.ResetPasswordToken,
+		&i.RspasswordTokenExpiredAt,
+	)
+	return i, err
+}
+
 const updateUser = `-- name: UpdateUser :one
 UPDATE users
 SET full_name = $2, email = $3, phone = $4
 WHERE username = $1
-RETURNING username, hashed_password, full_name, email, phone, role, "isBooking", password_changed_at, created_at
+RETURNING username, hashed_password, full_name, email, phone, role, "isBooking", password_changed_at, created_at, reset_password_token, rspassword_token_expired_at
 `
 
 type UpdateUserParams struct {
@@ -202,6 +291,8 @@ func (q *Queries) UpdateUser(ctx context.Context, arg UpdateUserParams) (User, e
 		&i.IsBooking,
 		&i.PasswordChangedAt,
 		&i.CreatedAt,
+		&i.ResetPasswordToken,
+		&i.RspasswordTokenExpiredAt,
 	)
 	return i, err
 }
@@ -210,7 +301,7 @@ const updateUserStatus = `-- name: UpdateUserStatus :one
 UPDATE users
 SET "isBooking" = $2
 WHERE username = $1
-RETURNING username, hashed_password, full_name, email, phone, role, "isBooking", password_changed_at, created_at
+RETURNING username, hashed_password, full_name, email, phone, role, "isBooking", password_changed_at, created_at, reset_password_token, rspassword_token_expired_at
 `
 
 type UpdateUserStatusParams struct {
@@ -231,6 +322,8 @@ func (q *Queries) UpdateUserStatus(ctx context.Context, arg UpdateUserStatusPara
 		&i.IsBooking,
 		&i.PasswordChangedAt,
 		&i.CreatedAt,
+		&i.ResetPasswordToken,
+		&i.RspasswordTokenExpiredAt,
 	)
 	return i, err
 }
