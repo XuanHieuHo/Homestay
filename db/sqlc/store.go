@@ -46,13 +46,14 @@ func (store *SQLStore) execTx(ctx context.Context, fn func(*Queries) error) erro
 	return tx.Commit()
 }
 
+// checkin date string format, convert string to time.Time
 type BookingTxParams struct {
-	UserBooking     string    `json:"user_booking"`
-	HomestayBooking int64     `json:"homestay_booking"`
-	PromotionID     string    `json:"promotion_id"`
-	CheckinDate     time.Time `json:"checkin_date"`
-	NumberOfDay     int32     `json:"number_of_day"`
-	NumberOfGuest   int32     `json:"number_of_guest"`
+	UserBooking     string `json:"user_booking"`
+	HomestayBooking int64  `json:"homestay_booking"`
+	PromotionID     string `json:"promotion_id"`
+	CheckinDate     string `json:"checkin_date"`
+	NumberOfDay     int32  `json:"number_of_day"`
+	NumberOfGuest   int32  `json:"number_of_guest"`
 }
 
 type BookingTxResult struct {
@@ -85,15 +86,9 @@ func (store *SQLStore) BookingTx(ctx context.Context, arg BookingTxParams) (Book
 		if err != nil {
 			return err
 		}
-		result.UserBooking = User{
-			Username:  user.Username,
-			FullName:  user.FullName,
-			Email:     user.Email,
-			Phone:     user.Phone,
-			IsBooking: user.IsBooking,
-		}
+		
 
-		if result.UserBooking.IsBooking {
+		if user.IsBooking {
 			err = fmt.Errorf("user has already booked")
 			return err
 		}
@@ -120,11 +115,15 @@ func (store *SQLStore) BookingTx(ctx context.Context, arg BookingTxParams) (Book
 		}
 
 		bookingID := util.RandomBookingCode()
+		checkinDate, err := time.Parse("2006-01-02", arg.CheckinDate)
+		if err != nil {
+			return err
+		}
 
 		bookings, err := q.GetBookingByHomestayAndTime(ctx, GetBookingByHomestayAndTimeParams{
 			HomestayBooking: arg.HomestayBooking,
-			CheckinDate:     arg.CheckinDate,
-			CheckoutDate:    arg.CheckinDate.AddDate(0, 0, int(arg.NumberOfDay)),
+			CheckinDate:     checkinDate,
+			CheckoutDate:    checkinDate.AddDate(0, 0, int(arg.NumberOfDay)),
 		})
 
 		if err != nil {
@@ -132,7 +131,7 @@ func (store *SQLStore) BookingTx(ctx context.Context, arg BookingTxParams) (Book
 		}
 
 		if len(bookings) > 0 {
-			return fmt.Errorf("this homestay has been booked in this time 1") 
+			return fmt.Errorf("this homestay has been booked in this time 1")
 		}
 
 		result.Booking, err = q.CreateBooking(ctx, CreateBookingParams{
@@ -142,8 +141,8 @@ func (store *SQLStore) BookingTx(ctx context.Context, arg BookingTxParams) (Book
 			PromotionID:     arg.PromotionID,
 			Status:          "validated",
 			BookingDate:     time.Now(),
-			CheckinDate:     arg.CheckinDate,
-			CheckoutDate:    arg.CheckinDate.AddDate(0, 0, int(arg.NumberOfDay)),
+			CheckinDate:     checkinDate,
+			CheckoutDate:    checkinDate.AddDate(0, 0, int(arg.NumberOfDay)),
 			NumberOfGuest:   arg.NumberOfGuest,
 			ServiceFee:      float64(15 * arg.NumberOfGuest * arg.NumberOfDay),
 			Tax:             0.1,
@@ -183,6 +182,13 @@ func (store *SQLStore) BookingTx(ctx context.Context, arg BookingTxParams) (Book
 		})
 		if err != nil {
 			return err
+		}
+		result.UserBooking = User{
+			Username:  user.Username,
+			FullName:  user.FullName,
+			Email:     user.Email,
+			Phone:     user.Phone,
+			IsBooking: user.IsBooking,
 		}
 
 		return nil

@@ -4,7 +4,6 @@ import (
 	"database/sql"
 	"errors"
 	"net/http"
-	"time"
 
 	db "github.com/XuanHieuHo/homestay/db/sqlc"
 	"github.com/XuanHieuHo/homestay/token"
@@ -12,10 +11,10 @@ import (
 )
 
 type createBookingRequest struct {
-	PromotionID   string    `json:"promotion_id" binding:"required"`
-	CheckinDate   time.Time `json:"checkin_date" binding:"required"`
-	NumberOfDay   int32     `json:"number_of_day" binding:"required"`
-	NumberOfGuest int32     `json:"number_of_guest" binding:"required,min=1"`
+	PromotionID   string `json:"promotion_id" binding:"required"`
+	CheckinDate   string `json:"checkin_date" binding:"required"`
+	NumberOfDay   int32  `json:"number_of_day" binding:"required"`
+	NumberOfGuest int32  `json:"number_of_guest" binding:"required,min=1"`
 }
 
 type createUserAndHomestay struct {

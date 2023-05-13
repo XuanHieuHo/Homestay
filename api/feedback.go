@@ -4,6 +4,7 @@ import (
 	"database/sql"
 	"errors"
 	"net/http"
+	"time"
 
 	db "github.com/XuanHieuHo/homestay/db/sqlc"
 	"github.com/XuanHieuHo/homestay/token"
@@ -66,6 +67,7 @@ func (server *Server) createFeedback(ctx *gin.Context) {
 		HomestayCommented: homestay.ID,
 		Rating:            reqCreate.Rating,
 		Commention:        reqCreate.Commention,
+		CreatedAt:         time.Now(),
 	}
 
 	feedback, err := server.store.CreateFeedback(ctx, arg)
@@ -192,7 +194,6 @@ func (server *Server) updateFeedback(ctx *gin.Context) {
 
 	ctx.JSON(http.StatusOK, feedbackUpdate)
 }
-
 
 func (server *Server) deleteFeedback(ctx *gin.Context) {
 	var reqGet updateFeedbackRequest
