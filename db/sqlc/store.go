@@ -176,8 +176,8 @@ func (store *SQLStore) BookingTx(ctx context.Context, arg BookingTxParams) (Book
 			return err
 		}
 
-		_, err = q.UpdateUserStatus(ctx, UpdateUserStatusParams{
-			Username:  result.UserBooking.Username,
+		userUpdate, err := q.UpdateUserStatus(ctx, UpdateUserStatusParams{
+			Username:  arg.UserBooking,
 			IsBooking: true,
 		})
 		if err != nil {
@@ -188,7 +188,7 @@ func (store *SQLStore) BookingTx(ctx context.Context, arg BookingTxParams) (Book
 			FullName:  user.FullName,
 			Email:     user.Email,
 			Phone:     user.Phone,
-			IsBooking: user.IsBooking,
+			IsBooking: userUpdate.IsBooking,
 		}
 
 		return nil
