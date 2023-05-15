@@ -124,9 +124,16 @@ type listHomestayRequest struct {
 	PageID   int32 `form:"page_id" binding:"required,min=1"`
 	PageSize int32 `form:"page_size" binding:"required,min=5,max=10"`
 }
+type listHomestayResponse struct {
+	Homestays []struct {
+		db.Homestay `json:"homestay"`
+		Feedbacks []db.Feedback `json:"feedbacks"`
+	} `json:"homestays"`
+}
 
 func (server *Server) listHomestay(ctx *gin.Context) {
 	var req listHomestayRequest
+	var result listHomestayResponse
 	if err := ctx.ShouldBindQuery(&req); err != nil {
 		ctx.JSON(http.StatusBadRequest, errorResponse(err))
 		return
@@ -142,8 +149,25 @@ func (server *Server) listHomestay(ctx *gin.Context) {
 		ctx.JSON(http.StatusInternalServerError, errorResponse(err))
 		return
 	}
+	
+	for _, homestay := range homestays {
+		feedbacks, err := server.store.ListFeedbacks(ctx, db.ListFeedbacksParams{
+			HomestayCommented: homestay.ID,
+			Limit: req.PageSize,
+			Offset: (req.PageID - 1) * req.PageSize,
+		})
+		if err != nil {
+			ctx.JSON(http.StatusInternalServerError, errorResponse(err))
+			return
+		}
+		result.Homestays = append(result.Homestays, struct {
+			db.Homestay `json:"homestay"`
+			Feedbacks   []db.Feedback `json:"feedbacks"`
+		}{homestay, feedbacks})
+	}
 
-	ctx.JSON(http.StatusOK, homestays)
+
+	ctx.JSON(http.StatusOK, result)
 }
 
 type updateHomestayStatusRequest struct {

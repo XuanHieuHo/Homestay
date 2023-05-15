@@ -82,11 +82,17 @@ type listFeedbackRequest struct {
 	PageID   int32 `form:"page_id" binding:"required,min=1"`
 	PageSize int32 `form:"page_size" binding:"required,min=10,max=20"`
 }
+type listFeedbackResponse struct {
+	Feedbacks []struct {
+		db.Feedback `json:"feedback"`
+		User userResponse `json:"commentor"`
+	} `json:"feedbacks"`
+}
 
 func (server *Server) listFeedbackByID(ctx *gin.Context) {
 	var reqHomestay getHomestayRequest
 	var req listFeedbackRequest
-
+	var result listFeedbackResponse
 	if err := ctx.ShouldBindUri(&reqHomestay); err != nil {
 		ctx.JSON(http.StatusBadRequest, errorResponse(err))
 		return
@@ -108,7 +114,19 @@ func (server *Server) listFeedbackByID(ctx *gin.Context) {
 		ctx.JSON(http.StatusInternalServerError, errorResponse(err))
 		return
 	}
-	ctx.JSON(http.StatusOK, feedbacks)
+	for _, feedback := range feedbacks {
+		user, err := server.store.GetUser(ctx, feedback.UserComment)
+		if err != nil {
+			ctx.JSON(http.StatusInternalServerError, errorResponse(err))
+			return
+		}
+		userResult := newUserResponse(user)
+		result.Feedbacks = append(result.Feedbacks, struct {
+			db.Feedback `json:"feedback"`
+			User userResponse `json:"commentor"`
+		}{feedback, userResult})
+	}
+	ctx.JSON(http.StatusOK, result)
 }
 
 type updateFeedbackRequest struct {
