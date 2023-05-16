@@ -100,9 +100,23 @@ type getHomestayRequest struct {
 	ID int64 `uri:"id" binding:"required,min=1"`
 }
 
+type getHomestayByIDResponse struct {
+	Homestay []struct {
+		db.Homestay `json:"homestay"`
+		listFeedbackResponse `json:"list_of_feedbacks"`
+	} `json:"homestays"`
+}
+
 func (server *Server) getHomestayByID(ctx *gin.Context) {
 	var req getHomestayRequest
+	var reqList listHomestayRequest
+	var result getHomestayByIDResponse
+	var resultFeedbacks listFeedbackResponse
 	if err := ctx.ShouldBindUri(&req); err != nil {
+		ctx.JSON(http.StatusBadRequest, errorResponse(err))
+		return
+	}
+	if err := ctx.ShouldBindQuery(&reqList); err != nil {
 		ctx.JSON(http.StatusBadRequest, errorResponse(err))
 		return
 	}
@@ -116,24 +130,52 @@ func (server *Server) getHomestayByID(ctx *gin.Context) {
 		ctx.JSON(http.StatusInternalServerError, errorResponse(err))
 		return
 	}
+	feedbacks, err := server.store.ListFeedbacks(ctx, db.ListFeedbacksParams{
+		HomestayCommented: homestay.ID,
+		Limit:             reqList.PageSize,
+		Offset:            (reqList.PageID - 1) * reqList.PageSize,
+	})
+	if err != nil {
+		ctx.JSON(http.StatusInternalServerError, errorResponse(err))
+		return
+	}
+	for _, feedback := range feedbacks {
+		user, err := server.store.GetUser(ctx, feedback.UserComment)
+		if err != nil {
+			ctx.JSON(http.StatusInternalServerError, errorResponse(err))
+			return
+		}
+		userResult := newUserResponse(user)
+		resultFeedbacks.Feedbacks = append(resultFeedbacks.Feedbacks, struct {
+			db.Feedback `json:"feedback"`
+			User userResponse `json:"commentor"`
+		} {feedback, userResult} )
+	}
+	result.Homestay = append(result.Homestay, struct {
+		db.Homestay `json:"homestay"`
+		listFeedbackResponse `json:"list_of_feedbacks"`
+	}{homestay, resultFeedbacks})
 
-	ctx.JSON(http.StatusOK, homestay)
+	ctx.JSON(http.StatusOK, result)
 }
 
 type listHomestayRequest struct {
 	PageID   int32 `form:"page_id" binding:"required,min=1"`
 	PageSize int32 `form:"page_size" binding:"required,min=5,max=10"`
 }
+
 type listHomestayResponse struct {
 	Homestays []struct {
 		db.Homestay `json:"homestay"`
-		Feedbacks []db.Feedback `json:"feedbacks"`
+		listFeedbackResponse `json:"list_of_feedbacks"`
 	} `json:"homestays"`
 }
+
 
 func (server *Server) listHomestay(ctx *gin.Context) {
 	var req listHomestayRequest
 	var result listHomestayResponse
+	var resultFeedbacks listFeedbackResponse
 	if err := ctx.ShouldBindQuery(&req); err != nil {
 		ctx.JSON(http.StatusBadRequest, errorResponse(err))
 		return
@@ -160,13 +202,24 @@ func (server *Server) listHomestay(ctx *gin.Context) {
 			ctx.JSON(http.StatusInternalServerError, errorResponse(err))
 			return
 		}
+		for _, feedback := range feedbacks {
+			user, err := server.store.GetUser(ctx, feedback.UserComment)
+			if err != nil {
+				ctx.JSON(http.StatusInternalServerError, errorResponse(err))
+				return
+			}
+			userResult := newUserResponse(user)
+			resultFeedbacks.Feedbacks = append(resultFeedbacks.Feedbacks, struct {
+				db.Feedback `json:"feedback"`
+				User userResponse `json:"commentor"`
+			} {feedback, userResult} )
+		}
+
 		result.Homestays = append(result.Homestays, struct {
 			db.Homestay `json:"homestay"`
-			Feedbacks   []db.Feedback `json:"feedbacks"`
-		}{homestay, feedbacks})
+			listFeedbackResponse `json:"list_of_feedbacks"`
+		}{homestay, resultFeedbacks})
 	}
-
-
 	ctx.JSON(http.StatusOK, result)
 }
 
