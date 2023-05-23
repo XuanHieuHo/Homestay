@@ -60,7 +60,6 @@ func (server *Server) setupRouter() {
 	//promotion
 	authUserRoutes.GET("/promotions/:title", server.getPromotionByTitle)
 	authUserRoutes.GET("/promotions/", server.listPromotion)
-	
 	// feedback
 	authUserRoutes.POST("/users/:username/feedbacks/:homestay_commented", server.createFeedback)
 	authUserRoutes.GET("/homestays/:id/feedbacks", server.listFeedbackByID)

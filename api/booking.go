@@ -35,7 +35,7 @@ type createUserAndHomestay struct {
 // @Failure 401 {string} error
 // @Failure 404 {string} error
 // @Failure 500 {string} error
-// @Router /api/users/:username/bookings/:homestay_booking [post]
+// @Router /api/users/{username}/bookings/{homestay_booking} [post]
 func (server *Server) createBooking(ctx *gin.Context) {
 	var reqUserHomestay createUserAndHomestay
 	var req createBookingRequest
@@ -103,7 +103,7 @@ type cancelBookingRequest struct {
 // @Failure 401 {string} error
 // @Failure 404 {string} error
 // @Failure 500 {string} error
-// @Router /api/users/:username/bookings/:homestay_booking/:booking_id/cancel [put]
+// @Router /api/users/{username}/bookings/{homestay_booking}/{booking_id}/cancel [put]
 func (server *Server) cancelBooking(ctx *gin.Context) {
 	var req cancelBookingRequest
 	if err := ctx.ShouldBindUri(&req); err != nil {
@@ -158,7 +158,7 @@ type checkoutRequest struct {
 // @Success 200 {string} successfully
 // @Failure 400 {string} error
 // @Failure 500 {string} error
-// @Router /api/users/:username/bookings/:homestay_booking/:booking_id/checkout [put]
+// @Router /api/admin/users/{username}/bookings/{homestay_booking}/{booking_id}/checkout [put]
 func (server *Server) checkoutBooking(ctx *gin.Context) {
 	var req checkoutRequest
 	if err := ctx.ShouldBindUri(&req); err != nil {

@@ -120,7 +120,7 @@ type getHomestayByIDResponse struct {
 // @ID getHomestayByID
 // @Produce json
 // @Accept json
-// @Tags User
+// @Tags Started
 // @Param id path string true "ID"
 // @Param data query listHomestayRequest true "listHomestayRequest data"
 // @Success 200 {object} getHomestayByIDResponse
@@ -197,7 +197,7 @@ type listHomestayResponse struct {
 // @Produce json
 // @Accept json
 // @Param data query listHomestayRequest true "listHomestayRequest data"
-// @Tags User
+// @Tags Started
 // @Success 200 {object} listHomestayResponse
 // @Failure 400 {string} error
 // @Failure 401 {string} error

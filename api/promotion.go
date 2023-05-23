@@ -37,6 +37,18 @@ func newPromotionResponse(promotion db.Promotion) promotionResponse {
 	}
 }
 
+// @Summary Admin Create Promotion
+// @ID createPromotion
+// @Produce json
+// @Accept json
+// @Tags Admin
+// @Param data body createPromotionRequest true "createPromotionRequest data"
+// @Security bearerAuth
+// @Success 200 {object} promotionResponse
+// @Failure 400 {string} error
+// @Failure 403 {string} error
+// @Failure 500 {string} error
+// @Router /api/admin/promotions [post]
 func (server *Server) createPromotion(ctx *gin.Context) {
 	var req createPromotionRequest
 	if err := ctx.ShouldBindJSON(&req); err != nil {
@@ -50,6 +62,7 @@ func (server *Server) createPromotion(ctx *gin.Context) {
 		Title:           req.Title,
 		Description:     req.Description,
 		DiscountPercent: req.DiscountPercent,
+		StartDate:       time.Now(),
 		EndDate:         endDate,
 	}
 
@@ -74,6 +87,18 @@ type getPromotionRequest struct {
 	Title string `uri:"title" binding:"required,alphanum"`
 }
 
+// @Summary User Get Promotion By Title
+// @ID getPromotionByTitle
+// @Produce json
+// @Accept json
+// @Tags User
+// @Param title path string true "Title"
+// @Security bearerAuth
+// @Success 200 {object} promotionResponse
+// @Failure 400 {string} error
+// @Failure 404 {string} error
+// @Failure 500 {string} error
+// @Router /api/promotions/{title} [get]
 func (server *Server) getPromotionByTitle(ctx *gin.Context) {
 	var req getPromotionRequest
 	if err := ctx.ShouldBindUri(&req); err != nil {
@@ -100,6 +125,17 @@ type listPromotionRequest struct {
 	PageSize int32 `form:"page_size" binding:"required,min=5,max=10"`
 }
 
+// @Summary User Get List Promotion
+// @ID listPromotion
+// @Produce json
+// @Accept json
+// @Tags User
+// @Param data query listPromotionRequest true "listPromotionRequest data"
+// @Security bearerAuth
+// @Success 200 {array} db.Promotion
+// @Failure 400 {string} error
+// @Failure 500 {string} error
+// @Router /api/promotions [get]
 func (server *Server) listPromotion(ctx *gin.Context) {
 	var req listPromotionRequest
 	if err := ctx.ShouldBindQuery(&req); err != nil {
@@ -127,6 +163,20 @@ type updatePromotionRequest struct {
 	EndDate         int64   `json:"end_date" binding:"required"`
 }
 
+// @Summary Admin Update Promotion
+// @ID updatePromotion
+// @Produce json
+// @Accept json
+// @Tags Admin
+// @Param data body updatePromotionRequest true "updatePromotionRequest data"
+// @Param title path string true "Title"
+// @Security bearerAuth
+// @Success 200 {object} db.Promotion
+// @Failure 400 {string} error
+// @Failure 403 {string} error
+// @Failure 404 {string} error
+// @Failure 500 {string} error
+// @Router /api/admin/promotions/{title} [put]
 func (server *Server) updatePromotion(ctx *gin.Context) {
 	var reqPromotion getPromotionRequest
 	var reqUpdate updatePromotionRequest
@@ -150,8 +200,8 @@ func (server *Server) updatePromotion(ctx *gin.Context) {
 		ctx.JSON(http.StatusInternalServerError, errorResponse(err))
 		return
 	}
-
-	endDate := time.Now().Add(time.Duration(reqUpdate.EndDate) * 24 * time.Hour)
+	
+	endDate := promotion.StartDate.Add(time.Duration(reqUpdate.EndDate) * 24 * time.Hour)
 
 	arg := db.UpdatePromotionParams{
 		ID:              promotion.ID,
@@ -179,6 +229,17 @@ type deletePromotionRequest struct {
 	ID int64 `uri:"id" binding:"required,min=1"`
 }
 
+// @Summary Admin Delete Promotion
+// @ID deletePromotion
+// @Produce json
+// @Accept json
+// @Tags Admin
+// @Param id path string true "ID"
+// @Security bearerAuth
+// @Success 200 {string} successfully
+// @Failure 400 {string} error
+// @Failure 500 {string} error
+// @Router /api/admin/promotions/{id} [delete]
 func (server *Server) deletePromotion(ctx *gin.Context) {
 	var req deletePromotionRequest
 

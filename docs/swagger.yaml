@@ -24,6 +24,16 @@ definitions:
     - number_of_guest
     - promotion_id
     type: object
+  api.createFeedbackRequest:
+    properties:
+      commention:
+        type: string
+      rating:
+        type: string
+    required:
+    - commention
+    - rating
+    type: object
   api.createHomestayRequest:
     properties:
       address:
@@ -54,6 +64,22 @@ definitions:
     - price
     - second_image
     - third_image
+    type: object
+  api.createPromotionRequest:
+    properties:
+      description:
+        type: string
+      discount_percent:
+        type: number
+      end_date:
+        type: integer
+      title:
+        type: string
+    required:
+    - description
+    - discount_percent
+    - end_date
+    - title
     type: object
   api.createUserRequest:
     properties:
@@ -163,6 +189,21 @@ definitions:
     - original_password
     - second_password
     type: object
+  api.promotionResponse:
+    properties:
+      description:
+        type: string
+      discount_percent:
+        type: number
+      end_date:
+        type: string
+      id:
+        type: integer
+      start_date:
+        type: string
+      title:
+        type: string
+    type: object
   api.resetPasswordRequest:
     properties:
       first_password:
@@ -181,12 +222,46 @@ definitions:
     - second_password
     - username
     type: object
+  api.totalIncomeMonthlyRequest:
+    properties:
+      month:
+        maximum: 12
+        minimum: 1
+        type: integer
+      year:
+        minimum: 2023
+        type: integer
+    required:
+    - month
+    - year
+    type: object
+  api.totalIncomeYearlyRequest:
+    properties:
+      year:
+        minimum: 2023
+        type: integer
+    required:
+    - year
+    type: object
   api.updateHomestayStatusRequest:
     properties:
       status:
         type: string
     required:
     - status
+    type: object
+  api.updatePromotionRequest:
+    properties:
+      description:
+        type: string
+      discount_percent:
+        type: number
+      end_date:
+        type: integer
+    required:
+    - description
+    - discount_percent
+    - end_date
     type: object
   api.updateUserRequest:
     properties:
@@ -307,6 +382,21 @@ definitions:
       pay_method:
         type: string
       status:
+        type: string
+    type: object
+  db.Promotion:
+    properties:
+      description:
+        type: string
+      discount_percent:
+        type: number
+      end_date:
+        type: string
+      id:
+        type: integer
+      start_date:
+        type: string
+      title:
         type: string
     type: object
   db.User:
@@ -442,6 +532,229 @@ paths:
       security:
       - bearerAuth: []
       summary: Admin Delete Homestay
+      tags:
+      - Admin
+  /api/admin/income/monthly:
+    post:
+      consumes:
+      - application/json
+      operationId: getTotalIncomeMonthly
+      parameters:
+      - description: totalIncomeMonthlyRequest data
+        in: body
+        name: data
+        required: true
+        schema:
+          $ref: '#/definitions/api.totalIncomeMonthlyRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            type: float
+        "400":
+          description: Bad Request
+          schema:
+            type: string
+        "404":
+          description: Not Found
+          schema:
+            type: string
+        "500":
+          description: Internal Server Error
+          schema:
+            type: string
+      security:
+      - bearerAuth: []
+      summary: Admin Get Income Monthly
+      tags:
+      - Admin
+  /api/admin/income/yearly:
+    post:
+      consumes:
+      - application/json
+      operationId: getTotalIncomeYearly
+      parameters:
+      - description: totalIncomeYearlyRequest data
+        in: body
+        name: data
+        required: true
+        schema:
+          $ref: '#/definitions/api.totalIncomeYearlyRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            type: float
+        "400":
+          description: Bad Request
+          schema:
+            type: string
+        "404":
+          description: Not Found
+          schema:
+            type: string
+        "500":
+          description: Internal Server Error
+          schema:
+            type: string
+      security:
+      - bearerAuth: []
+      summary: Admin Get Income Yearly
+      tags:
+      - Admin
+  /api/admin/payments/unpaid:
+    get:
+      consumes:
+      - application/json
+      operationId: adminListPaymentUnpaid
+      parameters:
+      - in: query
+        minimum: 1
+        name: page_id
+        required: true
+        type: integer
+      - in: query
+        maximum: 10
+        minimum: 5
+        name: page_size
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            items:
+              $ref: '#/definitions/db.Payment'
+            type: array
+        "400":
+          description: Bad Request
+          schema:
+            type: string
+        "500":
+          description: Internal Server Error
+          schema:
+            type: string
+      security:
+      - bearerAuth: []
+      summary: Admin Get List Payment Unpaid
+      tags:
+      - Admin
+  /api/admin/promotions:
+    post:
+      consumes:
+      - application/json
+      operationId: createPromotion
+      parameters:
+      - description: createPromotionRequest data
+        in: body
+        name: data
+        required: true
+        schema:
+          $ref: '#/definitions/api.createPromotionRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/api.promotionResponse'
+        "400":
+          description: Bad Request
+          schema:
+            type: string
+        "403":
+          description: Forbidden
+          schema:
+            type: string
+        "500":
+          description: Internal Server Error
+          schema:
+            type: string
+      security:
+      - bearerAuth: []
+      summary: Admin Create Promotion
+      tags:
+      - Admin
+  /api/admin/promotions/{id}:
+    delete:
+      consumes:
+      - application/json
+      operationId: deletePromotion
+      parameters:
+      - description: ID
+        in: path
+        name: id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            type: string
+        "400":
+          description: Bad Request
+          schema:
+            type: string
+        "500":
+          description: Internal Server Error
+          schema:
+            type: string
+      security:
+      - bearerAuth: []
+      summary: Admin Delete Promotion
+      tags:
+      - Admin
+  /api/admin/promotions/{title}:
+    put:
+      consumes:
+      - application/json
+      operationId: updatePromotion
+      parameters:
+      - description: updatePromotionRequest data
+        in: body
+        name: data
+        required: true
+        schema:
+          $ref: '#/definitions/api.updatePromotionRequest'
+      - description: Title
+        in: path
+        name: title
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/db.Promotion'
+        "400":
+          description: Bad Request
+          schema:
+            type: string
+        "403":
+          description: Forbidden
+          schema:
+            type: string
+        "404":
+          description: Not Found
+          schema:
+            type: string
+        "500":
+          description: Internal Server Error
+          schema:
+            type: string
+      security:
+      - bearerAuth: []
+      summary: Admin Update Promotion
       tags:
       - Admin
   /api/admin/users/:
@@ -604,6 +917,136 @@ paths:
       summary: Admin Update User
       tags:
       - Admin
+  /api/admin/users/{username}/bookings/{homestay_booking}/{booking_id}/checkout:
+    put:
+      consumes:
+      - application/json
+      operationId: checkoutBooking
+      parameters:
+      - description: UserBooking
+        in: path
+        name: username
+        required: true
+        type: string
+      - description: HomestayBooking
+        in: path
+        name: homestay_booking
+        required: true
+        type: string
+      - description: BookingID
+        in: path
+        name: booking_id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            type: string
+        "400":
+          description: Bad Request
+          schema:
+            type: string
+        "500":
+          description: Internal Server Error
+          schema:
+            type: string
+      security:
+      - bearerAuth: []
+      summary: Admin CheckOut Booking
+      tags:
+      - Admin
+  /api/admin/users/{username}/feedbacks/{homestay_commented}/{id}:
+    delete:
+      consumes:
+      - application/json
+      operationId: adminDeleteFeedback
+      parameters:
+      - description: ID
+        in: path
+        name: id
+        required: true
+        type: string
+      - description: UserComment
+        in: path
+        name: username
+        required: true
+        type: string
+      - description: HomestayCommented
+        in: path
+        name: homestay_commented
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            type: string
+        "400":
+          description: Bad Request
+          schema:
+            type: string
+        "401":
+          description: Unauthorized
+          schema:
+            type: string
+        "404":
+          description: Not Found
+          schema:
+            type: string
+        "500":
+          description: Internal Server Error
+          schema:
+            type: string
+      security:
+      - bearerAuth: []
+      summary: Admin Delete Feedback
+      tags:
+      - Admin
+  /api/admin/users/{username}/payment/{booking_id}:
+    get:
+      consumes:
+      - application/json
+      operationId: adminGetPaymentByBookingID
+      parameters:
+      - description: Username
+        in: path
+        name: username
+        required: true
+        type: string
+      - description: BookingID
+        in: path
+        name: booking_id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/db.Payment'
+        "400":
+          description: Bad Request
+          schema:
+            type: string
+        "404":
+          description: Not Found
+          schema:
+            type: string
+        "500":
+          description: Internal Server Error
+          schema:
+            type: string
+      security:
+      - bearerAuth: []
+      summary: Admin Get Payment By BookingID
+      tags:
+      - Admin
   /api/forgotpassword:
     post:
       consumes:
@@ -676,7 +1119,7 @@ paths:
             type: string
       summary: Get List Homestay
       tags:
-      - User
+      - Started
   /api/homestays/{id}:
     get:
       consumes:
@@ -719,6 +1162,50 @@ paths:
           schema:
             type: string
       summary: Get Homestay By ID
+      tags:
+      - Started
+  /api/homestays/{id}/feedbacks:
+    get:
+      consumes:
+      - application/json
+      operationId: listFeedbackByID
+      parameters:
+      - in: query
+        minimum: 1
+        name: page_id
+        required: true
+        type: integer
+      - in: query
+        maximum: 20
+        minimum: 10
+        name: page_size
+        required: true
+        type: integer
+      - description: ID
+        in: path
+        name: id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            items:
+              $ref: '#/definitions/api.listFeedbackResponse'
+            type: array
+        "400":
+          description: Bad Request
+          schema:
+            type: string
+        "500":
+          description: Internal Server Error
+          schema:
+            type: string
+      security:
+      - bearerAuth: []
+      summary: User Get List Feedback About Homestay
       tags:
       - User
   /api/login:
@@ -763,6 +1250,80 @@ paths:
       summary: Login user
       tags:
       - Started
+  /api/promotions:
+    get:
+      consumes:
+      - application/json
+      operationId: listPromotion
+      parameters:
+      - in: query
+        minimum: 1
+        name: page_id
+        required: true
+        type: integer
+      - in: query
+        maximum: 10
+        minimum: 5
+        name: page_size
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            items:
+              $ref: '#/definitions/db.Promotion'
+            type: array
+        "400":
+          description: Bad Request
+          schema:
+            type: string
+        "500":
+          description: Internal Server Error
+          schema:
+            type: string
+      security:
+      - bearerAuth: []
+      summary: User Get List Promotion
+      tags:
+      - User
+  /api/promotions/{title}:
+    get:
+      consumes:
+      - application/json
+      operationId: getPromotionByTitle
+      parameters:
+      - description: Title
+        in: path
+        name: title
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/api.promotionResponse'
+        "400":
+          description: Bad Request
+          schema:
+            type: string
+        "404":
+          description: Not Found
+          schema:
+            type: string
+        "500":
+          description: Internal Server Error
+          schema:
+            type: string
+      security:
+      - bearerAuth: []
+      summary: User Get Promotion By Title
+      tags:
+      - User
   /api/register:
     post:
       consumes:
@@ -831,146 +1392,6 @@ paths:
       summary: Reset Password
       tags:
       - Started
-  /api/users/:username/bookings/:homestay_booking:
-    post:
-      consumes:
-      - application/json
-      operationId: createBooking
-      parameters:
-      - description: createBookingRequest data
-        in: body
-        name: data
-        required: true
-        schema:
-          $ref: '#/definitions/api.createBookingRequest'
-      - description: UserBooking
-        in: path
-        name: username
-        required: true
-        type: string
-      - description: HomestayBooking
-        in: path
-        name: homestay_booking
-        required: true
-        type: string
-      produces:
-      - application/json
-      responses:
-        "200":
-          description: OK
-          schema:
-            $ref: '#/definitions/db.BookingTxResult'
-        "400":
-          description: Bad Request
-          schema:
-            type: string
-        "401":
-          description: Unauthorized
-          schema:
-            type: string
-        "404":
-          description: Not Found
-          schema:
-            type: string
-        "500":
-          description: Internal Server Error
-          schema:
-            type: string
-      security:
-      - bearerAuth: []
-      summary: User Create Booking
-      tags:
-      - User
-  /api/users/:username/bookings/:homestay_booking/:booking_id/cancel:
-    put:
-      consumes:
-      - application/json
-      operationId: cancelBooking
-      parameters:
-      - description: UserBooking
-        in: path
-        name: username
-        required: true
-        type: string
-      - description: HomestayBooking
-        in: path
-        name: homestay_booking
-        required: true
-        type: string
-      - description: BookingID
-        in: path
-        name: booking_id
-        required: true
-        type: string
-      produces:
-      - application/json
-      responses:
-        "200":
-          description: OK
-          schema:
-            type: string
-        "400":
-          description: Bad Request
-          schema:
-            type: string
-        "401":
-          description: Unauthorized
-          schema:
-            type: string
-        "404":
-          description: Not Found
-          schema:
-            type: string
-        "500":
-          description: Internal Server Error
-          schema:
-            type: string
-      security:
-      - bearerAuth: []
-      summary: User Cancel Booking
-      tags:
-      - User
-  /api/users/:username/bookings/:homestay_booking/:booking_id/checkout:
-    put:
-      consumes:
-      - application/json
-      operationId: checkoutBooking
-      parameters:
-      - description: UserBooking
-        in: path
-        name: username
-        required: true
-        type: string
-      - description: HomestayBooking
-        in: path
-        name: homestay_booking
-        required: true
-        type: string
-      - description: BookingID
-        in: path
-        name: booking_id
-        required: true
-        type: string
-      produces:
-      - application/json
-      responses:
-        "200":
-          description: OK
-          schema:
-            type: string
-        "400":
-          description: Bad Request
-          schema:
-            type: string
-        "500":
-          description: Internal Server Error
-          schema:
-            type: string
-      security:
-      - bearerAuth: []
-      summary: Admin CheckOut Booking
-      tags:
-      - Admin
   /api/users/{username}:
     get:
       consumes:
@@ -1052,6 +1473,105 @@ paths:
       security:
       - bearerAuth: []
       summary: Update User
+      tags:
+      - User
+  /api/users/{username}/bookings/{homestay_booking}:
+    post:
+      consumes:
+      - application/json
+      operationId: createBooking
+      parameters:
+      - description: createBookingRequest data
+        in: body
+        name: data
+        required: true
+        schema:
+          $ref: '#/definitions/api.createBookingRequest'
+      - description: UserBooking
+        in: path
+        name: username
+        required: true
+        type: string
+      - description: HomestayBooking
+        in: path
+        name: homestay_booking
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/db.BookingTxResult'
+        "400":
+          description: Bad Request
+          schema:
+            type: string
+        "401":
+          description: Unauthorized
+          schema:
+            type: string
+        "404":
+          description: Not Found
+          schema:
+            type: string
+        "500":
+          description: Internal Server Error
+          schema:
+            type: string
+      security:
+      - bearerAuth: []
+      summary: User Create Booking
+      tags:
+      - User
+  /api/users/{username}/bookings/{homestay_booking}/{booking_id}/cancel:
+    put:
+      consumes:
+      - application/json
+      operationId: cancelBooking
+      parameters:
+      - description: UserBooking
+        in: path
+        name: username
+        required: true
+        type: string
+      - description: HomestayBooking
+        in: path
+        name: homestay_booking
+        required: true
+        type: string
+      - description: BookingID
+        in: path
+        name: booking_id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            type: string
+        "400":
+          description: Bad Request
+          schema:
+            type: string
+        "401":
+          description: Unauthorized
+          schema:
+            type: string
+        "404":
+          description: Not Found
+          schema:
+            type: string
+        "500":
+          description: Internal Server Error
+          schema:
+            type: string
+      security:
+      - bearerAuth: []
+      summary: User Cancel Booking
       tags:
       - User
   /api/users/{username}/change:
@@ -1146,6 +1666,255 @@ paths:
       security:
       - bearerAuth: []
       summary: User Check Password
+      tags:
+      - User
+  /api/users/{username}/feedbacks/{homestay_commented}:
+    post:
+      consumes:
+      - application/json
+      operationId: createFeedback
+      parameters:
+      - description: createFeedbackRequest data
+        in: body
+        name: data
+        required: true
+        schema:
+          $ref: '#/definitions/api.createFeedbackRequest'
+      - description: UserComment
+        in: path
+        name: username
+        required: true
+        type: string
+      - description: HomestayCommented
+        in: path
+        name: homestay_commented
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/db.Feedback'
+        "400":
+          description: Bad Request
+          schema:
+            type: string
+        "401":
+          description: Unauthorized
+          schema:
+            type: string
+        "404":
+          description: Not Found
+          schema:
+            type: string
+        "500":
+          description: Internal Server Error
+          schema:
+            type: string
+      security:
+      - bearerAuth: []
+      summary: User Create Feedback
+      tags:
+      - User
+  /api/users/{username}/feedbacks/{homestay_commented}/{id}:
+    delete:
+      consumes:
+      - application/json
+      operationId: deleteFeedback
+      parameters:
+      - description: ID
+        in: path
+        name: id
+        required: true
+        type: string
+      - description: UserComment
+        in: path
+        name: username
+        required: true
+        type: string
+      - description: HomestayCommented
+        in: path
+        name: homestay_commented
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            type: string
+        "400":
+          description: Bad Request
+          schema:
+            type: string
+        "401":
+          description: Unauthorized
+          schema:
+            type: string
+        "404":
+          description: Not Found
+          schema:
+            type: string
+        "500":
+          description: Internal Server Error
+          schema:
+            type: string
+      security:
+      - bearerAuth: []
+      summary: User Delete Feedback
+      tags:
+      - User
+    put:
+      consumes:
+      - application/json
+      operationId: updateFeedback
+      parameters:
+      - description: createFeedbackRequest data
+        in: body
+        name: data
+        required: true
+        schema:
+          $ref: '#/definitions/api.createFeedbackRequest'
+      - description: ID
+        in: path
+        name: id
+        required: true
+        type: string
+      - description: UserComment
+        in: path
+        name: username
+        required: true
+        type: string
+      - description: HomestayCommented
+        in: path
+        name: homestay_commented
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/db.Feedback'
+        "400":
+          description: Bad Request
+          schema:
+            type: string
+        "401":
+          description: Unauthorized
+          schema:
+            type: string
+        "404":
+          description: Not Found
+          schema:
+            type: string
+        "500":
+          description: Internal Server Error
+          schema:
+            type: string
+      security:
+      - bearerAuth: []
+      summary: User Update Feedback
+      tags:
+      - User
+  /api/users/{username}/payment/{booking_id}:
+    get:
+      consumes:
+      - application/json
+      operationId: userGetPaymentByBookingID
+      parameters:
+      - description: Username
+        in: path
+        name: username
+        required: true
+        type: string
+      - description: BookingID
+        in: path
+        name: booking_id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/db.Payment'
+        "400":
+          description: Bad Request
+          schema:
+            type: string
+        "401":
+          description: Unauthorized
+          schema:
+            type: string
+        "404":
+          description: Not Found
+          schema:
+            type: string
+        "500":
+          description: Internal Server Error
+          schema:
+            type: string
+      security:
+      - bearerAuth: []
+      summary: User Get Payment By BookingID
+      tags:
+      - User
+  /api/users/{username}/payment/unpaid:
+    get:
+      consumes:
+      - application/json
+      operationId: userListPaymentUnpaid
+      parameters:
+      - description: Username
+        in: path
+        name: username
+        required: true
+        type: string
+      - in: query
+        minimum: 1
+        name: page_id
+        required: true
+        type: integer
+      - in: query
+        maximum: 10
+        minimum: 5
+        name: page_size
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            items:
+              $ref: '#/definitions/db.Payment'
+            type: array
+        "400":
+          description: Bad Request
+          schema:
+            type: string
+        "401":
+          description: Unauthorized
+          schema:
+            type: string
+        "404":
+          description: Not Found
+          schema:
+            type: string
+        "500":
+          description: Internal Server Error
+          schema:
+            type: string
+      security:
+      - bearerAuth: []
+      summary: User Get List Payment Unpaid
       tags:
       - User
 securityDefinitions:

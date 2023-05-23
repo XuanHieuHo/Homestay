@@ -15,9 +15,10 @@ INSERT INTO promotions (
   title,
   description,
   discount_percent,
+  start_date,
   end_date
 ) VALUES (
-  $1, $2, $3, $4
+  $1, $2, $3, $4, $5
 ) RETURNING id, title, description, discount_percent, start_date, end_date
 `
 
@@ -25,6 +26,7 @@ type CreatePromotionParams struct {
 	Title           string    `json:"title"`
 	Description     string    `json:"description"`
 	DiscountPercent float64   `json:"discount_percent"`
+	StartDate       time.Time `json:"start_date"`
 	EndDate         time.Time `json:"end_date"`
 }
 
@@ -33,6 +35,7 @@ func (q *Queries) CreatePromotion(ctx context.Context, arg CreatePromotionParams
 		arg.Title,
 		arg.Description,
 		arg.DiscountPercent,
+		arg.StartDate,
 		arg.EndDate,
 	)
 	var i Promotion
