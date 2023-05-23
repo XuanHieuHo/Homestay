@@ -21,7 +21,21 @@ type createUserAndHomestay struct {
 	UserBooking     string `uri:"username" binding:"required,alphanum"`
 	HomestayBooking int64  `uri:"homestay_booking" binding:"required,min=1"`
 }
-
+// @Summary User Create Booking
+// @ID createBooking
+// @Produce json
+// @Accept json
+// @Param data body createBookingRequest true "createBookingRequest data"
+// @Param username path string true "UserBooking"
+// @Param homestay_booking path string true "HomestayBooking"
+// @Security bearerAuth
+// @Tags User
+// @Success 200 {object} db.BookingTxResult
+// @Failure 400 {string} error
+// @Failure 401 {string} error
+// @Failure 404 {string} error
+// @Failure 500 {string} error
+// @Router /api/users/:username/bookings/:homestay_booking [post]
 func (server *Server) createBooking(ctx *gin.Context) {
 	var reqUserHomestay createUserAndHomestay
 	var req createBookingRequest
@@ -75,7 +89,21 @@ type cancelBookingRequest struct {
 	UserBooking     string `uri:"username" binding:"required,alphanum"`
 	HomestayBooking int64  `uri:"homestay_booking" binding:"required,min=1"`
 }
-
+// @Summary User Cancel Booking
+// @ID cancelBooking
+// @Produce json
+// @Accept json
+// @Param username path string true "UserBooking"
+// @Param homestay_booking path string true "HomestayBooking"
+// @Param booking_id path string true "BookingID"
+// @Security bearerAuth
+// @Tags User
+// @Success 200 {string} successfully
+// @Failure 400 {string} error
+// @Failure 401 {string} error
+// @Failure 404 {string} error
+// @Failure 500 {string} error
+// @Router /api/users/:username/bookings/:homestay_booking/:booking_id/cancel [put]
 func (server *Server) cancelBooking(ctx *gin.Context) {
 	var req cancelBookingRequest
 	if err := ctx.ShouldBindUri(&req); err != nil {
@@ -118,7 +146,19 @@ type checkoutRequest struct {
 	UserBooking     string `uri:"username" binding:"required,alphanum"`
 	HomestayBooking int64  `uri:"homestay_booking" binding:"required,min=1"`
 }
-
+// @Summary Admin CheckOut Booking
+// @ID checkoutBooking
+// @Produce json
+// @Accept json
+// @Param username path string true "UserBooking"
+// @Param homestay_booking path string true "HomestayBooking"
+// @Param booking_id path string true "BookingID"
+// @Security bearerAuth
+// @Tags Admin
+// @Success 200 {string} successfully
+// @Failure 400 {string} error
+// @Failure 500 {string} error
+// @Router /api/users/:username/bookings/:homestay_booking/:booking_id/checkout [put]
 func (server *Server) checkoutBooking(ctx *gin.Context) {
 	var req checkoutRequest
 	if err := ctx.ShouldBindUri(&req); err != nil {

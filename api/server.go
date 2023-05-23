@@ -7,6 +7,8 @@ import (
 	"github.com/XuanHieuHo/homestay/token"
 	"github.com/XuanHieuHo/homestay/util"
 	"github.com/gin-gonic/gin"
+	swaggerFiles "github.com/swaggo/files"
+	ginSwagger "github.com/swaggo/gin-swagger"
 )
 
 type Server struct {
@@ -34,6 +36,7 @@ func NewServer(config util.Config, store db.Store) (*Server, error) {
 
 func (server *Server) setupRouter() {
 	router := gin.Default()
+	router.GET("/docs/*any", ginSwagger.WrapHandler(swaggerFiles.Handler))
 	api := router.Group("/api")
 
 	// login and register
@@ -42,9 +45,13 @@ func (server *Server) setupRouter() {
 	api.POST("/forgotpassword", server.sendResetPasswordToken)
 	api.POST("/resetpassword", server.resetPassword)
 	api.POST("/tokens/renew_access", server.renewAccessToken)
+	// homestay
+	api.GET("/homestays/:id", server.getHomestayByID)
+	api.GET("/homestays/", server.listHomestay)
 
 	// -----------------------------------user--------------------------------
 	authUserRoutes := api.Group("/").Use(authMiddleware(server.tokenMaker))
+	authUserRoutes.GET("/docs/*any", ginSwagger.WrapHandler(swaggerFiles.Handler))
 	//user
 	authUserRoutes.GET("/users/:username", server.getUserByUsername)
 	authUserRoutes.PUT("/users/:username", server.updateUser)
@@ -53,9 +60,7 @@ func (server *Server) setupRouter() {
 	//promotion
 	authUserRoutes.GET("/promotions/:title", server.getPromotionByTitle)
 	authUserRoutes.GET("/promotions/", server.listPromotion)
-	// homestay
-	authUserRoutes.GET("/homestays/:id", server.getHomestayByID)
-	authUserRoutes.GET("/homestays/", server.listHomestay)
+	
 	// feedback
 	authUserRoutes.POST("/users/:username/feedbacks/:homestay_commented", server.createFeedback)
 	authUserRoutes.GET("/homestays/:id/feedbacks", server.listFeedbackByID)
@@ -70,6 +75,7 @@ func (server *Server) setupRouter() {
 
 	// -----------------------------------admin--------------------------------
 	authAdminRoutes := api.Group("/admin").Use(authAdminMiddleware(server.tokenMaker, server.store))
+	authAdminRoutes.GET("/docs/*any", ginSwagger.WrapHandler(swaggerFiles.Handler))
 	// user
 	authAdminRoutes.GET("/users", server.listUser)
 	authAdminRoutes.GET("/users/:username", server.adminGetUserByUsername)
@@ -101,8 +107,10 @@ func (server *Server) setupRouter() {
 
 	// -----------------------------------staff--------------------------------
 	authStaffRoutes := api.Group("/staff").Use(authStaffMiddleware(server.tokenMaker, server.store))
+	authStaffRoutes.GET("/docs/*any", ginSwagger.WrapHandler(swaggerFiles.Handler))
 	// booking
 	authStaffRoutes.PUT("/users/:username/bookings/:homestay_booking/:booking_id/checkout", server.checkoutBooking)
+	
 	server.router = router
 }
 

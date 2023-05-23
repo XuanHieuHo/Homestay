@@ -24,7 +24,17 @@ type createHomestayRequest struct {
 	SecondImage string  `json:"second_image" binding:"required"`
 	ThirdImage  string  `json:"third_image" binding:"required"`
 }
-
+// @Summary Admin Create Homestay
+// @ID createHomestay
+// @Produce json
+// @Accept json
+// @Tags Admin
+// @Param data body createHomestayRequest true "createHomestayRequest data"
+// @Security bearerAuth
+// @Success 200 {object} db.Homestay
+// @Failure 400 {string} error
+// @Failure 500 {string} error
+// @Router /api/admin/homestays [post]
 func (server *Server) createHomestay(ctx *gin.Context) {
 	// create connection to cloudinary
 	config, err := util.LoadConfig("..")
@@ -102,11 +112,22 @@ type getHomestayRequest struct {
 
 type getHomestayByIDResponse struct {
 	Homestay []struct {
-		db.Homestay `json:"homestay"`
+		db.Homestay          `json:"homestay"`
 		listFeedbackResponse `json:"list_of_feedbacks"`
 	} `json:"homestays"`
 }
-
+// @Summary Get Homestay By ID
+// @ID getHomestayByID
+// @Produce json
+// @Accept json
+// @Tags User
+// @Param id path string true "ID"
+// @Param data query listHomestayRequest true "listHomestayRequest data"
+// @Success 200 {object} getHomestayByIDResponse
+// @Failure 400 {string} error
+// @Failure 404 {string} error
+// @Failure 500 {string} error
+// @Router /api/homestays/{id} [get]
 func (server *Server) getHomestayByID(ctx *gin.Context) {
 	var req getHomestayRequest
 	var reqList listHomestayRequest
@@ -148,11 +169,11 @@ func (server *Server) getHomestayByID(ctx *gin.Context) {
 		userResult := newUserResponse(user)
 		resultFeedbacks.Feedbacks = append(resultFeedbacks.Feedbacks, struct {
 			db.Feedback `json:"feedback"`
-			User userResponse `json:"commentor"`
-		} {feedback, userResult} )
+			User        userResponse `json:"commentor"`
+		}{feedback, userResult})
 	}
 	result.Homestay = append(result.Homestay, struct {
-		db.Homestay `json:"homestay"`
+		db.Homestay          `json:"homestay"`
 		listFeedbackResponse `json:"list_of_feedbacks"`
 	}{homestay, resultFeedbacks})
 
@@ -166,12 +187,22 @@ type listHomestayRequest struct {
 
 type listHomestayResponse struct {
 	Homestays []struct {
-		db.Homestay `json:"homestay"`
+		db.Homestay          `json:"homestay"`
 		listFeedbackResponse `json:"list_of_feedbacks"`
 	} `json:"homestays"`
 }
 
-
+// @Summary Get List Homestay
+// @ID listHomestay
+// @Produce json
+// @Accept json
+// @Param data query listHomestayRequest true "listHomestayRequest data"
+// @Tags User
+// @Success 200 {object} listHomestayResponse
+// @Failure 400 {string} error
+// @Failure 401 {string} error
+// @Failure 500 {string} error
+// @Router /api/homestays [get]
 func (server *Server) listHomestay(ctx *gin.Context) {
 	var req listHomestayRequest
 	var result listHomestayResponse
@@ -191,12 +222,12 @@ func (server *Server) listHomestay(ctx *gin.Context) {
 		ctx.JSON(http.StatusInternalServerError, errorResponse(err))
 		return
 	}
-	
+
 	for _, homestay := range homestays {
 		feedbacks, err := server.store.ListFeedbacks(ctx, db.ListFeedbacksParams{
 			HomestayCommented: homestay.ID,
-			Limit: req.PageSize,
-			Offset: (req.PageID - 1) * req.PageSize,
+			Limit:             req.PageSize,
+			Offset:            (req.PageID - 1) * req.PageSize,
 		})
 		if err != nil {
 			ctx.JSON(http.StatusInternalServerError, errorResponse(err))
@@ -211,12 +242,12 @@ func (server *Server) listHomestay(ctx *gin.Context) {
 			userResult := newUserResponse(user)
 			resultFeedbacks.Feedbacks = append(resultFeedbacks.Feedbacks, struct {
 				db.Feedback `json:"feedback"`
-				User userResponse `json:"commentor"`
-			} {feedback, userResult} )
+				User        userResponse `json:"commentor"`
+			}{feedback, userResult})
 		}
 
 		result.Homestays = append(result.Homestays, struct {
-			db.Homestay `json:"homestay"`
+			db.Homestay          `json:"homestay"`
 			listFeedbackResponse `json:"list_of_feedbacks"`
 		}{homestay, resultFeedbacks})
 	}
@@ -226,7 +257,19 @@ func (server *Server) listHomestay(ctx *gin.Context) {
 type updateHomestayStatusRequest struct {
 	Status string `json:"status" binding:"required"`
 }
-
+// @Summary Admin Update Homestay Status
+// @ID updateHomestayStatus
+// @Produce json
+// @Accept json
+// @Param data body updateHomestayStatusRequest true "updateHomestayStatusRequest data"
+// @Param id path string true "ID"
+// @Security bearerAuth
+// @Tags Admin
+// @Success 200 {object} db.Homestay
+// @Failure 400 {string} error
+// @Failure 404 {string} error
+// @Failure 500 {string} error
+// @Router /api/admin/homestayStatus/{id} [put]
 func (server *Server) updateHomestayStatus(ctx *gin.Context) {
 	var reqHomestay getHomestayRequest
 	var reqUpdate updateHomestayStatusRequest
@@ -263,7 +306,19 @@ func (server *Server) updateHomestayStatus(ctx *gin.Context) {
 	}
 	ctx.JSON(http.StatusOK, homestay)
 }
-
+// @Summary Admin Update Homestay Info
+// @ID updateHomestayInfo
+// @Produce json
+// @Accept json
+// @Param data body createHomestayRequest true "createHomestayRequest data"
+// @Param id path string true "ID"
+// @Security bearerAuth
+// @Tags Admin
+// @Success 200 {object} db.Homestay
+// @Failure 400 {string} error
+// @Failure 404 {string} error
+// @Failure 500 {string} error
+// @Router /api/admin/homestayStatus/{id} [put]
 func (server *Server) updateHomestayInfo(ctx *gin.Context) {
 	var reqHomestay getHomestayRequest
 	var reqUpdate createHomestayRequest
@@ -308,7 +363,17 @@ func (server *Server) updateHomestayInfo(ctx *gin.Context) {
 	}
 	ctx.JSON(http.StatusOK, homestay)
 }
-
+// @Summary Admin Delete Homestay
+// @ID deleteHomestay
+// @Produce json
+// @Accept json
+// @Tags Admin
+// @Param id path string true "ID"
+// @Security bearerAuth
+// @Success 200 {string} successfully
+// @Failure 400 {string} error
+// @Failure 500 {string} error
+// @Router /api/admin/homestays/{id} [delete]
 func (server *Server) deleteHomestay(ctx *gin.Context) {
 	var req getHomestayRequest
 

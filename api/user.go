@@ -17,6 +17,7 @@ import (
 	"github.com/lib/pq"
 )
 
+// swagger:parameters createUserRequest
 type createUserRequest struct {
 	Username string `json:"username" binding:"required,alphanum"`
 	Password string `json:"password" binding:"required,min=6"`
@@ -24,7 +25,7 @@ type createUserRequest struct {
 	Email    string `json:"email" binding:"required,email"`
 	Phone    string `json:"phone" binding:"required,e164"`
 }
-
+// swagger:response userResponse
 type userResponse struct {
 	Username          string    `json:"username"`
 	FullName          string    `json:"full_name"`
@@ -43,7 +44,17 @@ func newUserResponse(user db.User) userResponse {
 		CreatedAt: user.CreatedAt,
 	}
 }
-
+// @Summary Create user
+// @ID createUser
+// @Produce json
+// @Accept json
+// @Param data body createUserRequest true "createUserRequest data"
+// @Tags Started
+// @Success 200 {object} userResponse
+// @Failure 400 {string} error
+// @Failure 403 {string} error
+// @Failure 500 {string} error
+// @Router /api/register [post]
 func (server *Server) createUser(ctx *gin.Context) {
 	var req createUserRequest
 	if err := ctx.ShouldBindJSON(&req); err != nil {
@@ -95,6 +106,19 @@ type loginUserResponse struct {
 	User                  userResponse `json:"user"`
 }
 
+// @Summary Login user
+// @ID loginUser
+// @Produce json
+// @Accept json
+// @Param data body loginUserRequest true "loginUserRequest data"
+// @Tags Started
+// @Success 200 {object} loginUserResponse
+// @Failure 400 {string} error
+// @Failure 401 {string} error
+// @Failure 403 {string} error
+// @Failure 404 {string} error
+// @Failure 500 {string} error
+// @Router /api/login [post]
 func (server *Server) loginUser(ctx *gin.Context) {
 	var req loginUserRequest
 	if err := ctx.ShouldBindJSON(&req); err != nil {
@@ -165,7 +189,17 @@ type forgotPasswordRequest struct {
 	Username string `json:"username" binding:"required,alphanum"`
 	Email    string `json:"email" binding:"required,email"`
 }
-
+// @Summary Send Reset Password Token
+// @ID sendResetPasswordToken
+// @Produce json
+// @Accept json
+// @Param data body forgotPasswordRequest true "forgotPasswordRequest data"
+// @Tags Started
+// @Success 200 {string} succesfully
+// @Failure 400 {string} error
+// @Failure 404 {string} error
+// @Failure 500 {string} error
+// @Router /api/forgotpassword [post]
 func (server *Server) sendResetPasswordToken(ctx *gin.Context) {
 	config, err := util.LoadConfig("..")
 	if err != nil {
@@ -290,7 +324,17 @@ type resetPasswordRequest struct {
 	FirstPassword  string `json:"first_password" binding:"required,min=6"`
 	SecondPassword string `json:"second_password" binding:"required,min=6"`
 }
-
+// @Summary Reset Password
+// @ID resetPassword
+// @Produce json
+// @Accept json
+// @Param data body resetPasswordRequest true "resetPasswordRequest data"
+// @Tags Started
+// @Success 200 {string} succesfully
+// @Failure 400 {string} error
+// @Failure 404 {string} error
+// @Failure 500 {string} error
+// @Router /api/resetpassword [post]
 func (server *Server) resetPassword(ctx *gin.Context) {
 	var req resetPasswordRequest
 	if err := ctx.ShouldBindJSON(&req); err != nil {
@@ -349,7 +393,19 @@ func (server *Server) resetPassword(ctx *gin.Context) {
 type getUserRequest struct {
 	Username string `uri:"username" binding:"required,alphanum"`
 }
-
+// @Summary Get User By Username
+// @ID getUserByUsername
+// @Produce json
+// @Accept json
+// @Tags User
+// @Security bearerAuth
+// @Param username path string true "Username"
+// @Success 200 {object} userResponse
+// @Failure 400 {string} error
+// @Failure 401 {string} error
+// @Failure 404 {string} error
+// @Failure 500 {string} error
+// @Router /api/users/{username} [get]
 func (server *Server) getUserByUsername(ctx *gin.Context) {
 	var req getUserRequest
 	if err := ctx.ShouldBindUri(&req); err != nil {
@@ -384,7 +440,19 @@ func (server *Server) getUserByUsername(ctx *gin.Context) {
 	}
 	ctx.JSON(http.StatusOK, rsp)
 }
-
+// @Summary Admin Get User By Username
+// @ID adminGetUserByUsername
+// @Produce json
+// @Accept json
+// @Tags Admin
+// @Security bearerAuth
+// @Param username path string true "Username"
+// @Success 200 {object} userResponse
+// @Failure 400 {string} error
+// @Failure 401 {string} error
+// @Failure 404 {string} error
+// @Failure 500 {string} error
+// @Router /api/admin/users/{username} [get]
 func (server *Server) adminGetUserByUsername(ctx *gin.Context) {
 	var req getUserRequest
 	if err := ctx.ShouldBindUri(&req); err != nil {
@@ -417,7 +485,19 @@ type listUserRequest struct {
 	PageID   int32 `form:"page_id" binding:"required,min=1"`
 	PageSize int32 `form:"page_size" binding:"required,min=5,max=10"`
 }
-
+// @Summary Get List User
+// @ID listUser
+// @Produce json
+// @Accept json
+// @Param data query listUserRequest true "listUserRequest data"
+// @Tags Admin
+// @Security bearerAuth
+// @Success 200 {array} db.User
+// @Failure 400 {string} error
+// @Failure 401 {string} error
+// @Failure 404 {string} error
+// @Failure 500 {string} error
+// @Router /api/admin/users/ [get]
 func (server *Server) listUser(ctx *gin.Context) {
 	var req listUserRequest
 	if err := ctx.ShouldBindQuery(&req); err != nil {
@@ -444,7 +524,20 @@ type updateUserRequest struct {
 	Email    string `json:"email" binding:"required,email"`
 	Phone    string `json:"phone" binding:"required,e164"`
 }
-
+// @Summary Update User
+// @ID updateUser
+// @Produce json
+// @Accept json
+// @Param data body updateUserRequest true "updateUserRequest data"
+// @Param username path string true "Username"
+// @Tags User
+// @Security bearerAuth
+// @Success 200 {object} db.User
+// @Failure 400 {string} error
+// @Failure 401 {string} error
+// @Failure 404 {string} error
+// @Failure 500 {string} error
+// @Router /api/users/{username} [put]
 func (server *Server) updateUser(ctx *gin.Context) {
 	var reqUsername getUserRequest
 	var reqUpdate updateUserRequest
@@ -498,7 +591,20 @@ func (server *Server) updateUser(ctx *gin.Context) {
 
 	ctx.JSON(http.StatusOK, user)
 }
-
+// @Summary Admin Update User
+// @ID adminUpdateUser
+// @Produce json
+// @Accept json
+// @Param data body updateUserRequest true "updateUserRequest data"
+// @Param username path string true "Username"
+// @Tags Admin
+// @Security bearerAuth
+// @Success 200 {object} db.User
+// @Failure 400 {string} error
+// @Failure 401 {string} error
+// @Failure 404 {string} error
+// @Failure 500 {string} error
+// @Router /api/admin/users/{username} [put]
 func (server *Server) adminUpdateUser(ctx *gin.Context) {
 	var reqUsername getUserRequest
 	var reqUpdate updateUserRequest
@@ -535,7 +641,17 @@ func (server *Server) adminUpdateUser(ctx *gin.Context) {
 
 	ctx.JSON(http.StatusOK, user)
 }
-
+// @Summary Admin Delete User
+// @ID deleteUser
+// @Produce json
+// @Accept json
+// @Tags Admin
+// @Param username path string true "Username"
+// @Security bearerAuth
+// @Success 200 {string} successfully
+// @Failure 400 {string} error
+// @Failure 500 {string} error
+// @Router /api/admin/users/{username} [delete]
 func (server *Server) deleteUser(ctx *gin.Context) {
 	var req getUserRequest
 
@@ -555,7 +671,20 @@ func (server *Server) deleteUser(ctx *gin.Context) {
 type checkPasswordRequest struct {
 	Password string `json:"password" binding:"required,min=6"`
 }
-
+// @Summary User Check Password
+// @ID checkPassword
+// @Produce json
+// @Accept json
+// @Param data body checkPasswordRequest true "checkPasswordRequest data"
+// @Param username path string true "Username"
+// @Tags User
+// @Security bearerAuth
+// @Success 200 {string} successfully
+// @Failure 400 {string} error
+// @Failure 401 {string} error
+// @Failure 404 {string} error
+// @Failure 500 {string} error
+// @Router /api/users/{username}/check [put]
 func (server *Server) checkPassword(ctx *gin.Context) {
 	var reqUsername getUserRequest
 	var reqPassword checkPasswordRequest
@@ -601,7 +730,21 @@ type newPasswordRequest struct {
 	FirstPassword    string `json:"first_password" binding:"required,min=6"`
 	SecondPassword   string `json:"second_password" binding:"required,min=6"`
 }
-
+// @Summary User Change Password
+// @ID changePassword
+// @Produce json
+// @Accept json
+// @Param data body newPasswordRequest true "newPasswordRequest data"
+// @Param username path string true "Username"
+// @Tags User
+// @Security bearerAuth
+// @Success 200 {string} successfully
+// @Failure 400 {string} error
+// @Failure 401 {string} error
+// @Failure 403 {string} error
+// @Failure 404 {string} error
+// @Failure 500 {string} error
+// @Router /api/users/{username}/change [put]
 func (server *Server) changePassword(ctx *gin.Context) {
 	var reqUsername getUserRequest
 	var reqPassword newPasswordRequest

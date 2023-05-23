@@ -7,8 +7,15 @@ import (
 	"github.com/XuanHieuHo/homestay/api"
 	db "github.com/XuanHieuHo/homestay/db/sqlc"
 	"github.com/XuanHieuHo/homestay/util"
+	_ "github.com/XuanHieuHo/homestay/docs"
 )
 
+// @title 		Service API
+// @version      1.0
+// @description  This is a sample server celler server.
+// @securityDefinitions.apikey bearerAuth
+// @in header
+// @name Authorization
 func main() {
 	config, err := util.LoadConfig(".")
 	if err != nil {

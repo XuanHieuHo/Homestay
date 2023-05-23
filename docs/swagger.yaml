@@ -1,0 +1,1156 @@
+definitions:
+  api.checkPasswordRequest:
+    properties:
+      password:
+        minLength: 6
+        type: string
+    required:
+    - password
+    type: object
+  api.createBookingRequest:
+    properties:
+      checkin_date:
+        type: string
+      number_of_day:
+        type: integer
+      number_of_guest:
+        minimum: 1
+        type: integer
+      promotion_id:
+        type: string
+    required:
+    - checkin_date
+    - number_of_day
+    - number_of_guest
+    - promotion_id
+    type: object
+  api.createHomestayRequest:
+    properties:
+      address:
+        type: string
+      capacity:
+        type: integer
+      description:
+        type: string
+      first_image:
+        type: string
+      main_image:
+        type: string
+      number_of_bed:
+        type: integer
+      price:
+        type: number
+      second_image:
+        type: string
+      third_image:
+        type: string
+    required:
+    - address
+    - capacity
+    - description
+    - first_image
+    - main_image
+    - number_of_bed
+    - price
+    - second_image
+    - third_image
+    type: object
+  api.createUserRequest:
+    properties:
+      email:
+        type: string
+      full_name:
+        type: string
+      password:
+        minLength: 6
+        type: string
+      phone:
+        type: string
+      username:
+        type: string
+    required:
+    - email
+    - full_name
+    - password
+    - phone
+    - username
+    type: object
+  api.forgotPasswordRequest:
+    properties:
+      email:
+        type: string
+      username:
+        type: string
+    required:
+    - email
+    - username
+    type: object
+  api.getHomestayByIDResponse:
+    properties:
+      homestays:
+        items:
+          properties:
+            homestay:
+              $ref: '#/definitions/db.Homestay'
+            list_of_feedbacks:
+              $ref: '#/definitions/api.listFeedbackResponse'
+          type: object
+        type: array
+    type: object
+  api.listFeedbackResponse:
+    properties:
+      feedbacks:
+        items:
+          properties:
+            commentor:
+              $ref: '#/definitions/api.userResponse'
+            feedback:
+              $ref: '#/definitions/db.Feedback'
+          type: object
+        type: array
+    type: object
+  api.listHomestayResponse:
+    properties:
+      homestays:
+        items:
+          properties:
+            homestay:
+              $ref: '#/definitions/db.Homestay'
+            list_of_feedbacks:
+              $ref: '#/definitions/api.listFeedbackResponse'
+          type: object
+        type: array
+    type: object
+  api.loginUserRequest:
+    properties:
+      password:
+        minLength: 6
+        type: string
+      username:
+        type: string
+    required:
+    - password
+    - username
+    type: object
+  api.loginUserResponse:
+    properties:
+      access_token:
+        type: string
+      access_token_expires_at:
+        type: string
+      refresh_token:
+        type: string
+      refresh_token_expires_at:
+        type: string
+      session_id:
+        type: string
+      user:
+        $ref: '#/definitions/api.userResponse'
+    type: object
+  api.newPasswordRequest:
+    properties:
+      first_password:
+        minLength: 6
+        type: string
+      original_password:
+        minLength: 6
+        type: string
+      second_password:
+        minLength: 6
+        type: string
+    required:
+    - first_password
+    - original_password
+    - second_password
+    type: object
+  api.resetPasswordRequest:
+    properties:
+      first_password:
+        minLength: 6
+        type: string
+      otpcode:
+        type: string
+      second_password:
+        minLength: 6
+        type: string
+      username:
+        type: string
+    required:
+    - first_password
+    - otpcode
+    - second_password
+    - username
+    type: object
+  api.updateHomestayStatusRequest:
+    properties:
+      status:
+        type: string
+    required:
+    - status
+    type: object
+  api.updateUserRequest:
+    properties:
+      email:
+        type: string
+      full_name:
+        type: string
+      phone:
+        type: string
+    required:
+    - email
+    - full_name
+    - phone
+    type: object
+  api.userResponse:
+    properties:
+      created_at:
+        type: string
+      email:
+        type: string
+      full_name:
+        type: string
+      password_changed_at:
+        type: string
+      phone:
+        type: string
+      username:
+        type: string
+    type: object
+  db.Booking:
+    properties:
+      booking_date:
+        type: string
+      booking_id:
+        type: string
+      checkin_date:
+        type: string
+      checkout_date:
+        type: string
+      homestay_booking:
+        type: integer
+      number_of_guest:
+        type: integer
+      promotion_id:
+        type: string
+      service_fee:
+        description: must be positive
+        type: number
+      status:
+        type: string
+      tax:
+        description: must be positive
+        type: number
+      user_booking:
+        type: string
+    type: object
+  db.BookingTxResult:
+    properties:
+      booking:
+        $ref: '#/definitions/db.Booking'
+      homestay_booking:
+        $ref: '#/definitions/db.Homestay'
+      payment:
+        $ref: '#/definitions/db.Payment'
+      user_booking:
+        $ref: '#/definitions/db.User'
+    type: object
+  db.Feedback:
+    properties:
+      commention:
+        type: string
+      created_at:
+        type: string
+      homestay_commented:
+        type: integer
+      id:
+        type: integer
+      rating:
+        type: string
+      user_comment:
+        type: string
+    type: object
+  db.Homestay:
+    properties:
+      address:
+        type: string
+      capacity:
+        type: integer
+      description:
+        type: string
+      first_image:
+        type: string
+      id:
+        type: integer
+      main_image:
+        type: string
+      number_of_bed:
+        type: integer
+      price:
+        type: number
+      second_image:
+        type: string
+      status:
+        type: string
+      third_image:
+        type: string
+    type: object
+  db.Payment:
+    properties:
+      amount:
+        type: number
+      booking_id:
+        type: string
+      id:
+        type: integer
+      pay_date:
+        type: string
+      pay_method:
+        type: string
+      status:
+        type: string
+    type: object
+  db.User:
+    properties:
+      created_at:
+        type: string
+      email:
+        type: string
+      full_name:
+        type: string
+      hashed_password:
+        type: string
+      isBooking:
+        type: boolean
+      password_changed_at:
+        type: string
+      phone:
+        type: string
+      reset_password_token:
+        type: string
+      role:
+        type: string
+      rspassword_token_expired_at:
+        type: string
+      username:
+        type: string
+    type: object
+info:
+  contact: {}
+  description: This is a sample server celler server.
+  title: Service API
+  version: "1.0"
+paths:
+  /api/admin/homestayStatus/{id}:
+    put:
+      consumes:
+      - application/json
+      operationId: updateHomestayInfo
+      parameters:
+      - description: createHomestayRequest data
+        in: body
+        name: data
+        required: true
+        schema:
+          $ref: '#/definitions/api.createHomestayRequest'
+      - description: ID
+        in: path
+        name: id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/db.Homestay'
+        "400":
+          description: Bad Request
+          schema:
+            type: string
+        "404":
+          description: Not Found
+          schema:
+            type: string
+        "500":
+          description: Internal Server Error
+          schema:
+            type: string
+      security:
+      - bearerAuth: []
+      summary: Admin Update Homestay Info
+      tags:
+      - Admin
+  /api/admin/homestays:
+    post:
+      consumes:
+      - application/json
+      operationId: createHomestay
+      parameters:
+      - description: createHomestayRequest data
+        in: body
+        name: data
+        required: true
+        schema:
+          $ref: '#/definitions/api.createHomestayRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/db.Homestay'
+        "400":
+          description: Bad Request
+          schema:
+            type: string
+        "500":
+          description: Internal Server Error
+          schema:
+            type: string
+      security:
+      - bearerAuth: []
+      summary: Admin Create Homestay
+      tags:
+      - Admin
+  /api/admin/homestays/{id}:
+    delete:
+      consumes:
+      - application/json
+      operationId: deleteHomestay
+      parameters:
+      - description: ID
+        in: path
+        name: id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            type: string
+        "400":
+          description: Bad Request
+          schema:
+            type: string
+        "500":
+          description: Internal Server Error
+          schema:
+            type: string
+      security:
+      - bearerAuth: []
+      summary: Admin Delete Homestay
+      tags:
+      - Admin
+  /api/admin/users/:
+    get:
+      consumes:
+      - application/json
+      operationId: listUser
+      parameters:
+      - in: query
+        minimum: 1
+        name: page_id
+        required: true
+        type: integer
+      - in: query
+        maximum: 10
+        minimum: 5
+        name: page_size
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            items:
+              $ref: '#/definitions/db.User'
+            type: array
+        "400":
+          description: Bad Request
+          schema:
+            type: string
+        "401":
+          description: Unauthorized
+          schema:
+            type: string
+        "404":
+          description: Not Found
+          schema:
+            type: string
+        "500":
+          description: Internal Server Error
+          schema:
+            type: string
+      security:
+      - bearerAuth: []
+      summary: Get List User
+      tags:
+      - Admin
+  /api/admin/users/{username}:
+    delete:
+      consumes:
+      - application/json
+      operationId: deleteUser
+      parameters:
+      - description: Username
+        in: path
+        name: username
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            type: string
+        "400":
+          description: Bad Request
+          schema:
+            type: string
+        "500":
+          description: Internal Server Error
+          schema:
+            type: string
+      security:
+      - bearerAuth: []
+      summary: Admin Delete User
+      tags:
+      - Admin
+    get:
+      consumes:
+      - application/json
+      operationId: adminGetUserByUsername
+      parameters:
+      - description: Username
+        in: path
+        name: username
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/api.userResponse'
+        "400":
+          description: Bad Request
+          schema:
+            type: string
+        "401":
+          description: Unauthorized
+          schema:
+            type: string
+        "404":
+          description: Not Found
+          schema:
+            type: string
+        "500":
+          description: Internal Server Error
+          schema:
+            type: string
+      security:
+      - bearerAuth: []
+      summary: Admin Get User By Username
+      tags:
+      - Admin
+    put:
+      consumes:
+      - application/json
+      operationId: adminUpdateUser
+      parameters:
+      - description: updateUserRequest data
+        in: body
+        name: data
+        required: true
+        schema:
+          $ref: '#/definitions/api.updateUserRequest'
+      - description: Username
+        in: path
+        name: username
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/db.User'
+        "400":
+          description: Bad Request
+          schema:
+            type: string
+        "401":
+          description: Unauthorized
+          schema:
+            type: string
+        "404":
+          description: Not Found
+          schema:
+            type: string
+        "500":
+          description: Internal Server Error
+          schema:
+            type: string
+      security:
+      - bearerAuth: []
+      summary: Admin Update User
+      tags:
+      - Admin
+  /api/forgotpassword:
+    post:
+      consumes:
+      - application/json
+      operationId: sendResetPasswordToken
+      parameters:
+      - description: forgotPasswordRequest data
+        in: body
+        name: data
+        required: true
+        schema:
+          $ref: '#/definitions/api.forgotPasswordRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            type: string
+        "400":
+          description: Bad Request
+          schema:
+            type: string
+        "404":
+          description: Not Found
+          schema:
+            type: string
+        "500":
+          description: Internal Server Error
+          schema:
+            type: string
+      summary: Send Reset Password Token
+      tags:
+      - Started
+  /api/homestays:
+    get:
+      consumes:
+      - application/json
+      operationId: listHomestay
+      parameters:
+      - in: query
+        minimum: 1
+        name: page_id
+        required: true
+        type: integer
+      - in: query
+        maximum: 10
+        minimum: 5
+        name: page_size
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/api.listHomestayResponse'
+        "400":
+          description: Bad Request
+          schema:
+            type: string
+        "401":
+          description: Unauthorized
+          schema:
+            type: string
+        "500":
+          description: Internal Server Error
+          schema:
+            type: string
+      summary: Get List Homestay
+      tags:
+      - User
+  /api/homestays/{id}:
+    get:
+      consumes:
+      - application/json
+      operationId: getHomestayByID
+      parameters:
+      - description: ID
+        in: path
+        name: id
+        required: true
+        type: string
+      - in: query
+        minimum: 1
+        name: page_id
+        required: true
+        type: integer
+      - in: query
+        maximum: 10
+        minimum: 5
+        name: page_size
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/api.getHomestayByIDResponse'
+        "400":
+          description: Bad Request
+          schema:
+            type: string
+        "404":
+          description: Not Found
+          schema:
+            type: string
+        "500":
+          description: Internal Server Error
+          schema:
+            type: string
+      summary: Get Homestay By ID
+      tags:
+      - User
+  /api/login:
+    post:
+      consumes:
+      - application/json
+      operationId: loginUser
+      parameters:
+      - description: loginUserRequest data
+        in: body
+        name: data
+        required: true
+        schema:
+          $ref: '#/definitions/api.loginUserRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/api.loginUserResponse'
+        "400":
+          description: Bad Request
+          schema:
+            type: string
+        "401":
+          description: Unauthorized
+          schema:
+            type: string
+        "403":
+          description: Forbidden
+          schema:
+            type: string
+        "404":
+          description: Not Found
+          schema:
+            type: string
+        "500":
+          description: Internal Server Error
+          schema:
+            type: string
+      summary: Login user
+      tags:
+      - Started
+  /api/register:
+    post:
+      consumes:
+      - application/json
+      operationId: createUser
+      parameters:
+      - description: createUserRequest data
+        in: body
+        name: data
+        required: true
+        schema:
+          $ref: '#/definitions/api.createUserRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/api.userResponse'
+        "400":
+          description: Bad Request
+          schema:
+            type: string
+        "403":
+          description: Forbidden
+          schema:
+            type: string
+        "500":
+          description: Internal Server Error
+          schema:
+            type: string
+      summary: Create user
+      tags:
+      - Started
+  /api/resetpassword:
+    post:
+      consumes:
+      - application/json
+      operationId: resetPassword
+      parameters:
+      - description: resetPasswordRequest data
+        in: body
+        name: data
+        required: true
+        schema:
+          $ref: '#/definitions/api.resetPasswordRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            type: string
+        "400":
+          description: Bad Request
+          schema:
+            type: string
+        "404":
+          description: Not Found
+          schema:
+            type: string
+        "500":
+          description: Internal Server Error
+          schema:
+            type: string
+      summary: Reset Password
+      tags:
+      - Started
+  /api/users/:username/bookings/:homestay_booking:
+    post:
+      consumes:
+      - application/json
+      operationId: createBooking
+      parameters:
+      - description: createBookingRequest data
+        in: body
+        name: data
+        required: true
+        schema:
+          $ref: '#/definitions/api.createBookingRequest'
+      - description: UserBooking
+        in: path
+        name: username
+        required: true
+        type: string
+      - description: HomestayBooking
+        in: path
+        name: homestay_booking
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/db.BookingTxResult'
+        "400":
+          description: Bad Request
+          schema:
+            type: string
+        "401":
+          description: Unauthorized
+          schema:
+            type: string
+        "404":
+          description: Not Found
+          schema:
+            type: string
+        "500":
+          description: Internal Server Error
+          schema:
+            type: string
+      security:
+      - bearerAuth: []
+      summary: User Create Booking
+      tags:
+      - User
+  /api/users/:username/bookings/:homestay_booking/:booking_id/cancel:
+    put:
+      consumes:
+      - application/json
+      operationId: cancelBooking
+      parameters:
+      - description: UserBooking
+        in: path
+        name: username
+        required: true
+        type: string
+      - description: HomestayBooking
+        in: path
+        name: homestay_booking
+        required: true
+        type: string
+      - description: BookingID
+        in: path
+        name: booking_id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            type: string
+        "400":
+          description: Bad Request
+          schema:
+            type: string
+        "401":
+          description: Unauthorized
+          schema:
+            type: string
+        "404":
+          description: Not Found
+          schema:
+            type: string
+        "500":
+          description: Internal Server Error
+          schema:
+            type: string
+      security:
+      - bearerAuth: []
+      summary: User Cancel Booking
+      tags:
+      - User
+  /api/users/:username/bookings/:homestay_booking/:booking_id/checkout:
+    put:
+      consumes:
+      - application/json
+      operationId: checkoutBooking
+      parameters:
+      - description: UserBooking
+        in: path
+        name: username
+        required: true
+        type: string
+      - description: HomestayBooking
+        in: path
+        name: homestay_booking
+        required: true
+        type: string
+      - description: BookingID
+        in: path
+        name: booking_id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            type: string
+        "400":
+          description: Bad Request
+          schema:
+            type: string
+        "500":
+          description: Internal Server Error
+          schema:
+            type: string
+      security:
+      - bearerAuth: []
+      summary: Admin CheckOut Booking
+      tags:
+      - Admin
+  /api/users/{username}:
+    get:
+      consumes:
+      - application/json
+      operationId: getUserByUsername
+      parameters:
+      - description: Username
+        in: path
+        name: username
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/api.userResponse'
+        "400":
+          description: Bad Request
+          schema:
+            type: string
+        "401":
+          description: Unauthorized
+          schema:
+            type: string
+        "404":
+          description: Not Found
+          schema:
+            type: string
+        "500":
+          description: Internal Server Error
+          schema:
+            type: string
+      security:
+      - bearerAuth: []
+      summary: Get User By Username
+      tags:
+      - User
+    put:
+      consumes:
+      - application/json
+      operationId: updateUser
+      parameters:
+      - description: updateUserRequest data
+        in: body
+        name: data
+        required: true
+        schema:
+          $ref: '#/definitions/api.updateUserRequest'
+      - description: Username
+        in: path
+        name: username
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/db.User'
+        "400":
+          description: Bad Request
+          schema:
+            type: string
+        "401":
+          description: Unauthorized
+          schema:
+            type: string
+        "404":
+          description: Not Found
+          schema:
+            type: string
+        "500":
+          description: Internal Server Error
+          schema:
+            type: string
+      security:
+      - bearerAuth: []
+      summary: Update User
+      tags:
+      - User
+  /api/users/{username}/change:
+    put:
+      consumes:
+      - application/json
+      operationId: changePassword
+      parameters:
+      - description: newPasswordRequest data
+        in: body
+        name: data
+        required: true
+        schema:
+          $ref: '#/definitions/api.newPasswordRequest'
+      - description: Username
+        in: path
+        name: username
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            type: string
+        "400":
+          description: Bad Request
+          schema:
+            type: string
+        "401":
+          description: Unauthorized
+          schema:
+            type: string
+        "403":
+          description: Forbidden
+          schema:
+            type: string
+        "404":
+          description: Not Found
+          schema:
+            type: string
+        "500":
+          description: Internal Server Error
+          schema:
+            type: string
+      security:
+      - bearerAuth: []
+      summary: User Change Password
+      tags:
+      - User
+  /api/users/{username}/check:
+    put:
+      consumes:
+      - application/json
+      operationId: checkPassword
+      parameters:
+      - description: checkPasswordRequest data
+        in: body
+        name: data
+        required: true
+        schema:
+          $ref: '#/definitions/api.checkPasswordRequest'
+      - description: Username
+        in: path
+        name: username
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            type: string
+        "400":
+          description: Bad Request
+          schema:
+            type: string
+        "401":
+          description: Unauthorized
+          schema:
+            type: string
+        "404":
+          description: Not Found
+          schema:
+            type: string
+        "500":
+          description: Internal Server Error
+          schema:
+            type: string
+      security:
+      - bearerAuth: []
+      summary: User Check Password
+      tags:
+      - User
+securityDefinitions:
+  bearerAuth:
+    in: header
+    name: Authorization
+    type: apiKey
+swagger: "2.0"
