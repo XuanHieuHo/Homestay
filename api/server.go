@@ -68,6 +68,7 @@ func (server *Server) setupRouter() {
 	// booking
 	authUserRoutes.POST("/users/:username/bookings/:homestay_booking", server.createBooking)
 	authUserRoutes.PUT("/users/:username/bookings/:homestay_booking/:booking_id/cancel", server.cancelBooking)
+	authUserRoutes.GET("/users/:username/list_booking", server.userGetListBooking)
 	// payment
 	authUserRoutes.GET("/users/:username/payment/:booking_id", server.userGetPaymentByBookingID)
 	authUserRoutes.GET("/users/:username/payment/unpaid", server.userListPaymentUnpaid)

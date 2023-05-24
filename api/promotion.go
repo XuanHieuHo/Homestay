@@ -13,7 +13,7 @@ import (
 type createPromotionRequest struct {
 	Title           string  `json:"title" binding:"required"`
 	Description     string  `json:"description" binding:"required"`
-	DiscountPercent float64 `json:"discount_percent" binding:"required"`
+	DiscountPercent float64 `json:"discount_percent"`
 	EndDate         int64   `json:"end_date" binding:"required"`
 }
 
@@ -200,7 +200,7 @@ func (server *Server) updatePromotion(ctx *gin.Context) {
 		ctx.JSON(http.StatusInternalServerError, errorResponse(err))
 		return
 	}
-	
+
 	endDate := promotion.StartDate.Add(time.Duration(reqUpdate.EndDate) * 24 * time.Hour)
 
 	arg := db.UpdatePromotionParams{

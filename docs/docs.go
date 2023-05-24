@@ -2164,6 +2164,82 @@ const docTemplate = `{
                 }
             }
         },
+        "/api/users/{username}/list_booking/": {
+            "get": {
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ],
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "User"
+                ],
+                "summary": "User Get List Booking",
+                "operationId": "userGetListBooking",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Username",
+                        "name": "username",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "minimum": 1,
+                        "type": "integer",
+                        "name": "page_id",
+                        "in": "query",
+                        "required": true
+                    },
+                    {
+                        "maximum": 10,
+                        "minimum": 5,
+                        "type": "integer",
+                        "name": "page_size",
+                        "in": "query",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/api.listBookingResponse"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    "404": {
+                        "description": "Not Found",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                }
+            }
+        },
         "/api/users/{username}/payment/unpaid": {
             "get": {
                 "security": [
@@ -2411,7 +2487,6 @@ const docTemplate = `{
             "type": "object",
             "required": [
                 "description",
-                "discount_percent",
                 "end_date",
                 "title"
             ],
@@ -2486,6 +2561,22 @@ const docTemplate = `{
                             },
                             "list_of_feedbacks": {
                                 "$ref": "#/definitions/api.listFeedbackResponse"
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "api.listBookingResponse": {
+            "type": "object",
+            "properties": {
+                "list_booking": {
+                    "type": "array",
+                    "items": {
+                        "type": "object",
+                        "properties": {
+                            "detail_payment": {
+                                "$ref": "#/definitions/db.DetailPayment"
                             }
                         }
                     }
@@ -2787,6 +2878,9 @@ const docTemplate = `{
                 "booking": {
                     "$ref": "#/definitions/db.Booking"
                 },
+                "detail_payment": {
+                    "$ref": "#/definitions/db.DetailPayment"
+                },
                 "homestay_booking": {
                     "$ref": "#/definitions/db.Homestay"
                 },
@@ -2795,6 +2889,44 @@ const docTemplate = `{
                 },
                 "user_booking": {
                     "$ref": "#/definitions/db.User"
+                }
+            }
+        },
+        "db.DetailPayment": {
+            "type": "object",
+            "properties": {
+                "checkin_date": {
+                    "type": "string"
+                },
+                "discount": {
+                    "type": "number"
+                },
+                "homestay_booking": {
+                    "type": "integer"
+                },
+                "homestay_fee": {
+                    "type": "number"
+                },
+                "number_of_day": {
+                    "type": "integer"
+                },
+                "number_of_guest": {
+                    "type": "integer"
+                },
+                "service_fee": {
+                    "type": "number"
+                },
+                "surchange_capacity": {
+                    "type": "number"
+                },
+                "tax": {
+                    "type": "number"
+                },
+                "total_amount": {
+                    "type": "number"
+                },
+                "user_booking": {
+                    "type": "string"
                 }
             }
         },

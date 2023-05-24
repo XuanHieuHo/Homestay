@@ -77,7 +77,6 @@ definitions:
         type: string
     required:
     - description
-    - discount_percent
     - end_date
     - title
     type: object
@@ -120,6 +119,16 @@ definitions:
               $ref: '#/definitions/db.Homestay'
             list_of_feedbacks:
               $ref: '#/definitions/api.listFeedbackResponse'
+          type: object
+        type: array
+    type: object
+  api.listBookingResponse:
+    properties:
+      list_booking:
+        items:
+          properties:
+            detail_payment:
+              $ref: '#/definitions/db.DetailPayment'
           type: object
         type: array
     type: object
@@ -322,12 +331,39 @@ definitions:
     properties:
       booking:
         $ref: '#/definitions/db.Booking'
+      detail_payment:
+        $ref: '#/definitions/db.DetailPayment'
       homestay_booking:
         $ref: '#/definitions/db.Homestay'
       payment:
         $ref: '#/definitions/db.Payment'
       user_booking:
         $ref: '#/definitions/db.User'
+    type: object
+  db.DetailPayment:
+    properties:
+      checkin_date:
+        type: string
+      discount:
+        type: number
+      homestay_booking:
+        type: integer
+      homestay_fee:
+        type: number
+      number_of_day:
+        type: integer
+      number_of_guest:
+        type: integer
+      service_fee:
+        type: number
+      surchange_capacity:
+        type: number
+      tax:
+        type: number
+      total_amount:
+        type: number
+      user_booking:
+        type: string
     type: object
   db.Feedback:
     properties:
@@ -1819,6 +1855,56 @@ paths:
       security:
       - bearerAuth: []
       summary: User Update Feedback
+      tags:
+      - User
+  /api/users/{username}/list_booking/:
+    get:
+      consumes:
+      - application/json
+      operationId: userGetListBooking
+      parameters:
+      - description: Username
+        in: path
+        name: username
+        required: true
+        type: string
+      - in: query
+        minimum: 1
+        name: page_id
+        required: true
+        type: integer
+      - in: query
+        maximum: 10
+        minimum: 5
+        name: page_size
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/api.listBookingResponse'
+        "400":
+          description: Bad Request
+          schema:
+            type: string
+        "401":
+          description: Unauthorized
+          schema:
+            type: string
+        "404":
+          description: Not Found
+          schema:
+            type: string
+        "500":
+          description: Internal Server Error
+          schema:
+            type: string
+      security:
+      - bearerAuth: []
+      summary: User Get List Booking
       tags:
       - User
   /api/users/{username}/payment/{booking_id}:

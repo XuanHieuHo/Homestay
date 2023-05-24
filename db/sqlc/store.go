@@ -56,11 +56,45 @@ type BookingTxParams struct {
 	NumberOfGuest   int32  `json:"number_of_guest"`
 }
 
+type DetailPayment struct {
+	UserBooking       string  `json:"user_booking"`
+	HomestayBooking   int64   `json:"homestay_booking"`
+	CheckinDate       string  `json:"checkin_date"`
+	Discount          float64 `json:"discount"`
+	NumberOfDay       int32   `json:"number_of_day"`
+	NumberOfGuest     int32   `json:"number_of_guest"`
+	Tax               float64 `json:"tax"`
+	ServiceFee        float64 `json:"service_fee"`
+	SurchargeCapacity float64 `json:"surchange_capacity"`
+	HomestayFee       float64 `json:"homestay_fee"`
+	TotalAmount       float64 `json:"total_amount"`
+}
+
+type userResponse struct {
+	Username          string    `json:"username"`
+	FullName          string    `json:"full_name"`
+	Email             string    `json:"email"`
+	Phone             string    `json:"phone"`
+	PasswordChangedAt time.Time `json:"password_changed_at"`
+	CreatedAt         time.Time `json:"created_at"`
+}
+
+func newUserResponse(user User) userResponse {
+	return userResponse{
+		Username:  user.Username,
+		FullName:  user.FullName,
+		Email:     user.Email,
+		Phone:     user.Phone,
+		CreatedAt: user.CreatedAt,
+	}
+}
+
 type BookingTxResult struct {
-	Booking         Booking  `json:"booking"`
-	UserBooking     User     `json:"user_booking"`
-	HomestayBooking Homestay `json:"homestay_booking"`
-	Payment         Payment  `json:"payment"`
+	Booking         Booking       `json:"booking"`
+	UserBooking     userResponse  `json:"user_booking"`
+	HomestayBooking Homestay      `json:"homestay_booking"`
+	Payment         Payment       `json:"payment"`
+	DetailPayment   DetailPayment `json:"detail_payment"`
 }
 
 // Transaction booking homestay
@@ -86,7 +120,6 @@ func (store *SQLStore) BookingTx(ctx context.Context, arg BookingTxParams) (Book
 		if err != nil {
 			return err
 		}
-		
 
 		if user.IsBooking {
 			err = fmt.Errorf("user has already booked")
@@ -94,7 +127,7 @@ func (store *SQLStore) BookingTx(ctx context.Context, arg BookingTxParams) (Book
 		}
 
 		var discount float64
-		if arg.PromotionID != "" {
+		if arg.PromotionID != "none" {
 			promotion, err := q.GetPromotion(ctx, arg.PromotionID)
 			if err != nil {
 				if err == sql.ErrNoRows {
@@ -157,15 +190,28 @@ func (store *SQLStore) BookingTx(ctx context.Context, arg BookingTxParams) (Book
 			}
 			return err
 		}
+		result.DetailPayment.CheckinDate = result.Booking.CheckinDate.String()
+		result.DetailPayment.HomestayBooking = result.Booking.HomestayBooking
+		result.DetailPayment.NumberOfDay = arg.NumberOfDay
+		result.DetailPayment.NumberOfGuest = result.Booking.NumberOfGuest
+		result.DetailPayment.UserBooking = result.Booking.UserBooking
+		result.DetailPayment.ServiceFee = result.Booking.ServiceFee
 
+		result.DetailPayment.HomestayFee = float64(arg.NumberOfDay) * result.HomestayBooking.Price
 		var amount float64
 		if result.Booking.NumberOfGuest > result.HomestayBooking.Capacity {
-			amount = (1 + result.Booking.Tax) * (float64(result.Booking.NumberOfGuest-result.HomestayBooking.Capacity)*10 + (result.HomestayBooking.Price * float64(arg.NumberOfDay)) + result.Booking.ServiceFee)
+			result.DetailPayment.SurchargeCapacity = float64(result.Booking.NumberOfGuest-result.HomestayBooking.Capacity) * 10
+			amount = (result.DetailPayment.SurchargeCapacity + result.DetailPayment.HomestayFee + result.Booking.ServiceFee)
 		} else {
-			amount = (1 + result.Booking.Tax) * ((result.HomestayBooking.Price * float64(arg.NumberOfDay)) + result.Booking.ServiceFee)
+			result.DetailPayment.SurchargeCapacity = 0
+			amount = (result.DetailPayment.HomestayFee + result.Booking.ServiceFee)
 		}
 
+		result.DetailPayment.Tax = result.Booking.Tax * amount
+		amount = result.DetailPayment.Tax + amount
+		result.DetailPayment.Discount = discount * amount
 		totalAmount := (1 - discount) * amount
+		result.DetailPayment.TotalAmount = totalAmount
 
 		result.Payment, err = q.CreatePayment(ctx, CreatePaymentParams{
 			BookingID: result.Booking.BookingID,
@@ -176,20 +222,14 @@ func (store *SQLStore) BookingTx(ctx context.Context, arg BookingTxParams) (Book
 			return err
 		}
 
-		userUpdate, err := q.UpdateUserStatus(ctx, UpdateUserStatusParams{
+		_ , err = q.UpdateUserStatus(ctx, UpdateUserStatusParams{
 			Username:  arg.UserBooking,
 			IsBooking: true,
 		})
 		if err != nil {
 			return err
 		}
-		result.UserBooking = User{
-			Username:  user.Username,
-			FullName:  user.FullName,
-			Email:     user.Email,
-			Phone:     user.Phone,
-			IsBooking: userUpdate.IsBooking,
-		}
+		result.UserBooking = newUserResponse(user)
 
 		return nil
 	})
